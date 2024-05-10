@@ -9,42 +9,28 @@ use winit::window::WindowBuilder;
 use winit_input_helper::WinitInputHelper;
 use barnes_hut::body::Body;
 use barnes_hut::gravity::*;
+use barnes_hut::simulation::Simulation;
 
 
-
-const WIDTH: u32 = 800;
-const WIDTH_F: f32 = WIDTH as f32;
-const HEIGHT: u32 = 800;
+const WIDTH: u32 = 1000;
+const WIDTH_F: f64 = WIDTH as f64;
+const HEIGHT: u32 = 1000;
 
 const LIMIT: usize = (WIDTH * HEIGHT) as usize;
 
 fn main() -> Result<(), Error> {
-    let mut bodies: Vec<Body> = Vec::new();
-    bodies.push(Body::with_mass_and_pos(1.0,Vector2::new(400.0,600.0)));
-    bodies.push(Body::with_mass_and_pos(500.0,Vector2::new(400.0,200.0)));
-    bodies[0].velocity = Vector2::new(0.5f32,0.0f32);
-
-
-    // //expected to be 80100
-    // println!("{:}", calculate_buffer_pos(&bodies[0].pos));
-    //
-    // //index should have 0 as the last digit
-    // for _ in 1..1000{
-    //     apply_force(&mut bodies[0]);
-    //     println!("{:}", calculate_buffer_pos(&bodies[0].pos));
-    // }
-    //
-    //
-    //
-    //
-    // return Ok(());
-
-
-
-
-
-    // bodies.push(Body::with_mass_and_pos(50.0,Vector2::new(200.0,400.0)));
-    // bodies.push(Body::with_mass_and_pos(50.0,Vector2::new(400.0,400.0)));
+    // let mut bodies: Vec<Body> = Vec::new();
+    // bodies.push(Body::with_mass_and_pos(1.0,Vector2::new(400.0,600.0)));
+    // bodies.push(Body::with_mass_and_pos(500.0,Vector2::new(400.0,200.0)));
+    // bodies[0].velocity = Vector2::new(0.5f64,0.0f64);
+    let mut simulation = Simulation::new();
+    simulation.generate();
+    // simulation.bodies.push(Body::with_mass_and_pos(1.0,Vector2::new(500.0,500.0)));
+    // simulation.bodies[0].velocity.x = 1.0f64;
+    // simulation.bodies[0].velocity.y = -1.0f64;
+    // simulation.bodies.push(Body::with_mass_and_pos(500.0,Vector2::new(550.0,500.0)));
+    // simulation.bodies[1].velocity.x = -1.0f64;
+    // simulation.bodies[1].velocity.y = 1.0f64;
     //pre update
     env_logger::init();
     let event_loop = EventLoop::new();
@@ -85,48 +71,23 @@ fn main() -> Result<(), Error> {
                 return;
             }
 
-            for i in 0..bodies.len() {
-                for j in i..bodies.len() {
-                    if i == j {
-                        continue;
-                    }
-                    // println!("{} {}", i, j);
-                    calculate_force(&mut bodies[i..j + 1]);
-                }
-            }
-
-
+            simulation.update();
             let mut index: usize = 0;
-            for body in bodies.iter_mut() {
-                apply_force(body);
-                println!("{:?}",body.pos);
-
+            for body in &simulation.bodies {
                 index = calculate_buffer_pos(&body.pos);
-                // println!("y={:?}",y_temp);
-
                 if(index > LIMIT){
                     continue;
                 }
                 my_buffer[index] = (255,255,255,255);
-                // println!("{} = {:?}",index, my_buffer[index])
             }
-
             window.request_redraw();
-
-
-
-
         }
-
-
-
-
-
     });
 
 }
 
-fn calculate_buffer_pos(pos: &Vector2<f32>) -> usize{
+
+fn calculate_buffer_pos(pos: &Vector2<f64>) -> usize{
     (pos.x + (pos.y.round() * WIDTH_F)) as usize
 }
 
