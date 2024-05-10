@@ -1,30 +1,37 @@
-use cgmath::{Vector2};
+use cgmath::{InnerSpace, Vector2, Vector3};
 use crate::body::Body;
 
 const G: f64 = 1.00;
-const DT: f64 = 0.01;
+const DT: f64 = 1.0;
 
-const EPSILON: f64 = 0.5f64;
-const MIN: f64 = 1.0f64;
+const EPSILON: f64 = 1.0e-20;
+const MIN: f64 = 0.0f64;
 pub fn calculate_force(bodies: &mut[Body]){
 
-    // let p1 = bodies[0].pos;
-    // let m1 = bodies[0].mass;
-    // let p2 = bodies[1].pos;
-    // let m2 = bodies[1].mass;
+    // let dx = bodies[0].pos.x - bodies[1].pos.x;
+    // let dy = bodies[0].pos.y - bodies[1].pos.y;
+    // let dz = bodies[0].pos.z - bodies[1].pos.z;
+    // let dr_squared = dx*dx + dy*dy + dz+dz + EPSILON;
+    // let mag = dr_squared.sqrt(); // |r21|
+    // let force = ((G * bodies[0].mass * bodies[1].mass) / (mag.powi(3)));
+    // bodies[0].acceleration.x -= (force * dx)/bodies[0].mass;
+    // bodies[0].acceleration.y -= (force * dy)/bodies[0].mass;
+    // bodies[0].acceleration.z -= (force * dz)/bodies[0].mass;
     //
-    // let r = p2 - p1;
-    // let mag_sq = r.x * r.x + r.y * r.y;
-    // let mag = mag_sq.sqrt();
-    // let tmp = r / (mag_sq.max(MIN) * mag);
-    // bodies[0].acceleration += m2 * tmp;
-    // bodies[1].acceleration -= m1 * tmp;
-    let mut dist: Vector2<f64> = bodies[0].pos - bodies[1].pos;
-    let dist_mag_square = ((dist.x * dist.x) + (dist.y * dist.y)) + EPSILON;
-    let dist_mag = dist_mag_square.sqrt();
-    let gravity = (G * dist / (dist_mag * (dist_mag_square)));
-    bodies[0].acceleration -= (gravity * bodies[1].mass);
-    bodies[1].acceleration += (gravity * bodies[0].mass);
+    // bodies[1].acceleration.x += (force * dx)/bodies[1].mass;
+    // bodies[1].acceleration.y += (force * dy)/bodies[1].mass;
+    // bodies[1].acceleration.z += (force * dz)/bodies[1].mass;
+
+    let mut d = (bodies[0].pos - bodies[1].pos); //r21
+    let d_mag = ((d.x * d.x) + (d.y * d.y) + (d.z * d.z) + EPSILON).sqrt();
+    // let d_mag = d.magnitude(); // | r21 |
+    let force: Vector3<f64> = d * ((G * bodies[0].mass * bodies[1].mass)/d_mag.powi(3));
+
+    //TODO bring back the force vector to figure out the issue with DT
+    bodies[0].acceleration -= (force / bodies[0].mass);
+    bodies[1].acceleration += (force / bodies[1].mass);
+
+
 }
 
 

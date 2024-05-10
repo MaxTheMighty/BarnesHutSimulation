@@ -6,8 +6,8 @@ use barnes_hut::gravity::*;
 fn main() {
     let mut bodies: Vec<Body> = Vec::new();
 
-    bodies.push(Body::with_mass_and_pos(10.0,Vector2::new(100.0,100.0)));
-    bodies.push(Body::with_mass_and_pos(500.0,Vector2::new(200.0,400.0)));
+    bodies.push(Body::with_mass_and_pos(10.0, Vector2::new(100.0, 100.0), ));
+    bodies.push(Body::with_mass_and_pos(500.0, Vector2::new(200.0, 400.0), ));
     //pre update
     for _ in 0..100{
         for body in bodies.iter() {

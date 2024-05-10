@@ -1,6 +1,6 @@
-use std::ops::Index;
+#![allow(warnings)]
 
-use cgmath::Vector2;
+use cgmath::Vector3;
 use pixels::{Error, Pixels, SurfaceTexture};
 use winit::dpi::LogicalSize;
 use winit::event::{Event, VirtualKeyCode};
@@ -16,21 +16,20 @@ const WIDTH: u32 = 1000;
 const WIDTH_F: f64 = WIDTH as f64;
 const HEIGHT: u32 = 1000;
 
+const HEIGHT_F: f64 = HEIGHT as f64;
+
 const LIMIT: usize = (WIDTH * HEIGHT) as usize;
 
 fn main() -> Result<(), Error> {
-    // let mut bodies: Vec<Body> = Vec::new();
-    // bodies.push(Body::with_mass_and_pos(1.0,Vector2::new(400.0,600.0)));
-    // bodies.push(Body::with_mass_and_pos(500.0,Vector2::new(400.0,200.0)));
-    // bodies[0].velocity = Vector2::new(0.5f64,0.0f64);
+
     let mut simulation = Simulation::new();
-    simulation.generate();
-    // simulation.bodies.push(Body::with_mass_and_pos(1.0,Vector2::new(500.0,500.0)));
-    // simulation.bodies[0].velocity.x = 1.0f64;
-    // simulation.bodies[0].velocity.y = -1.0f64;
-    // simulation.bodies.push(Body::with_mass_and_pos(500.0,Vector2::new(550.0,500.0)));
-    // simulation.bodies[1].velocity.x = -1.0f64;
-    // simulation.bodies[1].velocity.y = 1.0f64;
+    // simulation.generate(1000, 500.0f64,200.0f64);
+    // simulation.square(50u16,300.0f64);
+    simulation.bodies.push(Body::with_mass_and_pos(10.0f64,Vector3::new(510.0f64,500.0f64,0.0f64)));
+    simulation.bodies.push(Body::with_mass_and_pos(5000.0f64,Vector3::new(520.0f64,200.0f64,6.0f64)));
+    simulation.bodies[0].velocity.x = 1.0f64;
+
+
     //pre update
     env_logger::init();
     let event_loop = EventLoop::new();
@@ -74,8 +73,11 @@ fn main() -> Result<(), Error> {
             simulation.update();
             let mut index: usize = 0;
             for body in &simulation.bodies {
+                // if(body.pos.x > WIDTH_F || body.pos.y > HEIGHT_F) {
+                //     continue;
+                // }
                 index = calculate_buffer_pos(&body.pos);
-                if(index > LIMIT){
+                if(index > LIMIT ){
                     continue;
                 }
                 my_buffer[index] = (255,255,255,255);
@@ -87,8 +89,8 @@ fn main() -> Result<(), Error> {
 }
 
 
-fn calculate_buffer_pos(pos: &Vector2<f64>) -> usize{
-    (pos.x + (pos.y.round() * WIDTH_F)) as usize
+fn calculate_buffer_pos(pos: &Vector3<f64>) -> usize{
+    return (pos.x + (pos.y.round() * WIDTH_F)) as usize;
 }
 
 
