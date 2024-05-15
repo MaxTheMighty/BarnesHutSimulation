@@ -23,11 +23,13 @@ const LIMIT: usize = (WIDTH * HEIGHT) as usize;
 fn main() -> Result<(), Error> {
 
     let mut simulation = Simulation::new();
-    // simulation.generate(1000, 500.0f64,200.0f64);
+    simulation.generate(2000, 500.0f64,200.0f64);
+    // simulation.cube(200.0, 200.0, 200.0, 300.0, 2000);
+    println!("{:?}",simulation.bodies.len());
     // simulation.square(50u16,300.0f64);
-    simulation.bodies.push(Body::with_mass_and_pos(10.0f64,Vector3::new(510.0f64,500.0f64,0.0f64)));
-    simulation.bodies.push(Body::with_mass_and_pos(5000.0f64,Vector3::new(520.0f64,200.0f64,6.0f64)));
-    simulation.bodies[0].velocity.x = 1.0f64;
+    // simulation.bodies.push(Body::with_mass_and_pos(10.0f64,Vector3::new(510.0f64,500.0f64,0.0f64)));
+    simulation.bodies.push(Body::with_mass_and_pos(5000000.0f64,Vector3::new(500.0f64,500.0f64,100.0f64)));
+    // simulation.bodies[0].velocity.x = 1.0f64;
 
 
     //pre update
@@ -72,15 +74,19 @@ fn main() -> Result<(), Error> {
 
             simulation.update();
             let mut index: usize = 0;
+            let mut alpha: u8 = 0;
             for body in &simulation.bodies {
-                // if(body.pos.x > WIDTH_F || body.pos.y > HEIGHT_F) {
-                //     continue;
-                // }
-                index = calculate_buffer_pos(&body.pos);
-                if(index > LIMIT ){
+                //println!("z: {:?}",body.pos.z);
+                if(body.pos.x > WIDTH_F || body.pos.y > HEIGHT_F || body.pos.x < 0.0f64 || body.pos.y < 0.0f64) {
                     continue;
                 }
-                my_buffer[index] = (255,255,255,255);
+                index = calculate_buffer_pos(&body.pos);
+                if(index >= LIMIT ){
+                    continue;
+                }
+
+                alpha = (255 - body.pos.z as u8).max(5);
+                my_buffer[index] = (255,255,255,alpha);
             }
             window.request_redraw();
         }

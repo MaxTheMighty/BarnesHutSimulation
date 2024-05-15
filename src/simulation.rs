@@ -28,9 +28,18 @@ impl Simulation {
 
         for x in 0..length{
             for y in 0 ..length{
-                self.bodies.push(Body::with_mass_and_pos(1.0, Vector3::new(x as f64 + top_left, y as f64 + top_left,0.0f64) ));
+                self.bodies.push(Body::with_mass_and_pos(1.0, Vector3::new(x as f64 + top_left, y as f64 + top_left,0.0f64)));
             }
+        }
+    }
 
+    pub fn cube(&mut self, length: f64, width: f64, depth: f64, top_left: f64, count: u16){
+        let mut body: Body;
+        for _ in 0..count{
+            body = Body::new();
+            body.pos = Vector3::new((fastrand::f64()*length + top_left), (fastrand::f64()*width + top_left),(fastrand::f64()*depth));
+            body.mass = 1.0;
+            self.bodies.push(body);
         }
     }
 

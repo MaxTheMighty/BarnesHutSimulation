@@ -6,6 +6,7 @@ pub struct Body {
     pub acceleration: Vector3<f64>,
     pub velocity: Vector3<f64>,
     pub mass: f64,
+    pub force: Vector3<f64>
 }
 
 
@@ -15,12 +16,13 @@ impl Body{
             pos: Vector3::new(0.0,0.0,0.0),
             acceleration: Vector3::new(0.0,0.0,0.0),
             velocity: Vector3::new(0.0,0.0,0.0),
-            mass: 0.0
+            mass: 0.0,
+            force: Vector3::new(0.0,0.0,0.0)
         }
     }
 
     pub fn random(offset: f64, area: f64) -> Body{
-        let mut out = Self::with_mass_and_pos(10.0f64,Vector3::new((fastrand::f64()*area) + offset, (fastrand::f64()*area) + offset,(fastrand::f64()*area) + offset));
+        let mut out = Self::with_mass_and_pos(10.0f64,Vector3::new((fastrand::f64()*area) + offset, (fastrand::f64()*area) + offset,(fastrand::f64()*area)));
         // out.velocity = Vector3::new(fastrand::f64()*2.0f64 - 1.0f64, fastrand::f64()*2.0f64 - 1.0f64);
         return out;
     }
@@ -31,6 +33,7 @@ impl Body{
             acceleration: Vector3::new(0.0,0.0,0.0),
             velocity: Vector3::new(0.0,0.0,0.0),
             mass,
+            force: Vector3::new(0.0,0.0,0.0)
         }
     }
 
@@ -40,6 +43,7 @@ impl Body{
             acceleration: Vector3::new(0.0,0.0,0.0),
             velocity: Vector3::new(0.0,0.0,0.0),
             mass,
+            force: Vector3::new(0.0,0.0,0.0)
         }
     }
 
