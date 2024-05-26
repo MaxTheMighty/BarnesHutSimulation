@@ -108,8 +108,6 @@ impl Quadtree {
                 }
             }
         }
-        self.update_mass();
-
     }
 
     pub fn update_mass(&mut self){
@@ -258,6 +256,7 @@ mod tests{
         qt.insert(body2);
         qt.insert(body3);
         qt.insert(body4);
+        qt.update_mass();
         assert_eq!(qt.subtrees.len(), 4);
         assert_eq!(qt.subtrees.len(), 4);
         assert_eq!(qt.total_mass, 4.0);

@@ -8,19 +8,6 @@ const EPSILON: f64 = 1.0;
 const MIN: f64 = 0.0f64;
 pub fn calculate_force(bodies: &mut[Body]){
 
-    // let dx = bodies[0].pos.x - bodies[1].pos.x;
-    // let dy = bodies[0].pos.y - bodies[1].pos.y;
-    // let dz = bodies[0].pos.z - bodies[1].pos.z;
-    // let dr_squared = dx*dx + dy*dy + dz+dz + EPSILON;
-    // let mag = dr_squared.sqrt(); // |r21|
-    // let force = ((G * bodies[0].mass * bodies[1].mass) / (mag.powi(3)));
-    // bodies[0].acceleration.x -= (force * dx)/bodies[0].mass;
-    // bodies[0].acceleration.y -= (force * dy)/bodies[0].mass;
-    // bodies[0].acceleration.z -= (force * dz)/bodies[0].mass;
-    //
-    // bodies[1].acceleration.x += (force * dx)/bodies[1].mass;
-    // bodies[1].acceleration.y += (force * dy)/bodies[1].mass;
-    // bodies[1].acceleration.z += (force * dz)/bodies[1].mass;
 
     let mut d = (bodies[0].pos - bodies[1].pos); //r21
     let d_mag = ((d.x * d.x) + (d.y * d.y) + EPSILON).sqrt();
@@ -28,8 +15,6 @@ pub fn calculate_force(bodies: &mut[Body]){
     let force: Vector2<f64> = d * ((G * bodies[0].mass * bodies[1].mass)/(d_mag.powi(3)));
 
     //TODO bring back the force vector to figure out the issue with DT
-    // bodies[0].acceleration -= (force / bodies[0].mass);
-    // bodies[1].acceleration += (force / bodies[1].mass);
     bodies[0].force-=force;
     bodies[1].force+=force;
 
