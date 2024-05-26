@@ -1,6 +1,6 @@
-use std::ops::Index;
+
 use cgmath::Vector2;
-use cgmath::Vector3;
+
 use barnes_hut::body::Body;
 use barnes_hut::gravity::*;
 

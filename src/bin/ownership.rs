@@ -1,5 +1,5 @@
 fn main() {
-    let mut list: Vec<i32> = (0..2).collect();
+    let list: Vec<i32> = (0..2).collect();
     println!("{:?}",list);
     let i = 1;
     let j = 0;

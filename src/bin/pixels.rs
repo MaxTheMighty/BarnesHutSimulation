@@ -1,8 +1,8 @@
 #![deny(clippy::all)]
 #![forbid(unsafe_code)]
 
-use std::ops::IndexMut;
-use cgmath::Vector2;
+
+
 use error_iter::ErrorIter as _;
 use log::error;
 use pixels::{Error, Pixels, SurfaceTexture};
@@ -93,7 +93,7 @@ fn log_error<E: std::error::Error + 'static>(method_name: &str, err: E) {
 
 
 fn draw(buffer: &mut [u8], my_buffer: &Vec<(u8,u8,u8,u8)>){
-    for (i,mut pixel) in buffer.chunks_exact_mut(4).enumerate(){
+    for (i,pixel) in buffer.chunks_exact_mut(4).enumerate(){
         pixel[0] = my_buffer[i].0;
         pixel[1] = my_buffer[i].1;
         pixel[2] = my_buffer[i].2;

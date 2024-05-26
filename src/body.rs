@@ -22,7 +22,7 @@ impl Body{
     }
 
     pub fn random(offset: f64, area: f64) -> Body{
-        let mut out = Self::with_mass_and_pos(10.0f64,Vector2::new((fastrand::f64()*area) + offset, (fastrand::f64()*area) + offset));
+        let out = Self::with_mass_and_pos(10.0f64,Vector2::new((fastrand::f64()*area) + offset, (fastrand::f64()*area) + offset));
         // out.velocity = Vector2::new(fastrand::f64()*2.0f64 - 1.0f64, fastrand::f64()*2.0f64 - 1.0f64);
         return out;
     }

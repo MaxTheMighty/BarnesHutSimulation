@@ -1,15 +1,15 @@
-use cgmath::{InnerSpace, Vector2, Vector3};
+use cgmath::{Vector2};
 use crate::body::Body;
 
 const G: f64 = 1.00;
 const DT: f64 = 0.01;
 
 const EPSILON: f64 = 1.0;
-const MIN: f64 = 0.0f64;
+//const MIN: f64 = 0.0f64;
 pub fn calculate_force(bodies: &mut[Body]){
 
 
-    let mut d = (bodies[0].pos - bodies[1].pos); //r21
+    let d = bodies[0].pos - bodies[1].pos; //r21
     let d_mag = ((d.x * d.x) + (d.y * d.y) + EPSILON).sqrt();
     // let d_mag = d.magnitude(); // | r21 |
     let force: Vector2<f64> = d * ((G * bodies[0].mass * bodies[1].mass)/(d_mag.powi(3)));

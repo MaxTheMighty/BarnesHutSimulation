@@ -1,4 +1,5 @@
-use cgmath::{Point1, Vector2};
+use std::ops::{Add, AddAssign, Div, DivAssign};
+use cgmath::{Vector2};
 use crate::body::Body;
 
 const A: usize = 0;
@@ -7,16 +8,17 @@ const C: usize = 2;
 const D: usize = 3;
 
 #[derive(PartialEq,Debug)]
-struct Rectangle {
+pub struct Rectangle {
     tl: Vector2<f64>,
     br: Vector2<f64>
 }
-struct Quadtree{
+#[derive(Debug)]
+pub struct Quadtree{
     boundaries: Rectangle,
     limit: usize,
-    subtrees: Vec<Box<Quadtree>>,
+    pub subtrees: Vec<Box<Quadtree>>,
     bodies: Vec<Body>,
-    center_of_mass: Vector2<f64>,
+    pub center_of_mass: Option<Vector2<f64>>,
     total_mass: f64
 }
 
@@ -65,7 +67,7 @@ impl Quadtree {
             limit,
             subtrees: Vec::new(),
             bodies: vec![],
-            center_of_mass: Vector2::new(0.0,0.0),
+            center_of_mass: None,
             total_mass: 0.0,
         }
     }
@@ -73,7 +75,7 @@ impl Quadtree {
 
     pub fn split(&mut self){
         //split into four
-        if(self.subtrees.len() != 0){
+        if self.subtrees.len() != 0 {
             return;
         }
 
@@ -86,11 +88,11 @@ impl Quadtree {
 
     pub fn insert(&mut self, body: Body) {
         //after we insert the body, check if we need to split
-        if(self.subtrees.len() == 0){
+        if self.subtrees.len() == 0 {
             self.bodies.push(body);
         } else {
-            match(self.subtree_index(body.pos)){
-                Some(i) => {self.subtrees[i].bodies.push(body)},
+            match self.subtree_index(body.pos){
+                Some(i) => {self.subtrees[i].insert(body)},
                 None => {return;}
             }
         }
@@ -98,11 +100,11 @@ impl Quadtree {
 
         let mut body: Option<Body>;
         //if we split
-        if(self.bodies.len() >= self.limit){
+        if self.bodies.len() > self.limit {
             self.split();
-            while(!self.bodies.is_empty()){
+            while !self.bodies.is_empty() {
                 body = self.bodies.pop();
-                match(body) {
+                match body {
                     Some(body) => {self.insert(body)},
                     None => {}
                 }
@@ -112,40 +114,88 @@ impl Quadtree {
 
     pub fn update_mass(&mut self){
         //base case
-        if(self.subtrees.is_empty()){
-            let mut temp_sum: f64 = 0.0;
-            for body in &self.bodies{
-                temp_sum+=body.mass;
-            }
-            self.total_mass = temp_sum;
-            return
-            //write the centroid function here
+        if self.subtrees.is_empty() {
+            self.calculate_center_leaf();
+            return;
         }
 
-        self.total_mass = 0.0;
+        //we aren't at the bottom, so we go further down
         for subtree in &mut self.subtrees{
             subtree.update_mass();
-            self.total_mass+=subtree.total_mass;
-            //write the centroid function here
         }
 
+        //then on the way up we calculate the center based on its children
+        self.calculate_center_node();
 
     }
 
 
+
+    pub fn calculate_center_leaf(&mut self){
+        if(self.bodies.is_empty()){
+            self.center_of_mass = None;
+            return;
+        }
+
+        //if we get to this point then this leaf has some bodies
+        //if the center of mass doesnt exist then we create it
+        match self.center_of_mass{
+            Some(_) => {},
+            None => { self.center_of_mass = Some(Vector2::new(0.0,0.0));}
+        }
+
+        //then update the center of mass
+        for body in &self.bodies{
+
+            //why does this have to be as_mut() ???
+            self.center_of_mass.as_mut().unwrap().x+=body.pos.x;
+            self.center_of_mass.as_mut().unwrap().y+=body.pos.y;
+
+        }
+        self.center_of_mass.as_mut().unwrap().x/=self.bodies.len() as f64;
+        self.center_of_mass.as_mut().unwrap().y/=self.bodies.len() as f64;
+
+    }
+
+    pub fn calculate_center_node(&mut self){
+        let mut non_empty_count: f64 = 0.0;
+        match self.center_of_mass{
+            Some(_) => {},
+            None => { self.center_of_mass = Some(Vector2::new(0.0,0.0));}
+        }
+        for subtree in &self.subtrees{
+            match(subtree.center_of_mass){
+                Some(center) => {
+                    non_empty_count+=1.0;
+                    self.center_of_mass.as_mut().unwrap().x+=center.x;
+                    self.center_of_mass.as_mut().unwrap().y+=center.y;
+                },
+                None => {
+                    continue;
+                }
+            }
+        }
+
+        // self.center_of_mass.as_mut().unwrap().div_assign(non_empty_count);
+        self.center_of_mass.as_mut().unwrap().x/=non_empty_count;
+        self.center_of_mass.as_mut().unwrap().y/=non_empty_count;
+    }
+
+
+
     pub fn subtree_index(&self, pos: Vector2<f64>) -> Option<usize>{
-        if(self.subtrees.len() == 0){
+        if self.subtrees.len() == 0 {
             return None;
         }
         let midpoint = self.boundaries.midpoint();
-        if(pos.x <= midpoint.x){
-            if(pos.y <= midpoint.y){
+        if pos.x <= midpoint.x {
+            if pos.y <= midpoint.y {
                 return Some(A);
             } else {
                 return Some(C);
             }
         } else {
-            if(pos.y <= midpoint.y){
+            if pos.y <= midpoint.y {
                 return Some(B);
             } else {
                 return Some(D);
@@ -159,7 +209,7 @@ impl Quadtree {
 mod tests{
     use cgmath::Vector2;
     use crate::body::Body;
-    use crate::quadtree::{A, B, C, D, Rectangle};
+    use crate::quadtree::{A, D, Rectangle};
     use crate::quadtree::Quadtree;
     #[test]
     fn test_within(){
@@ -252,14 +302,16 @@ mod tests{
         let body2: Body = Body::with_pos(Vector2::new(210.0,230.0));
         let body3: Body = Body::with_pos(Vector2::new(0.0,0.0));
         let body4: Body = Body::with_pos(Vector2::new(1.0,1.0));
+        let body5: Body = Body::with_pos(Vector2::new(205.0,205.0));
         qt.insert(body);
+        qt.update_mass();
         qt.insert(body2);
         qt.insert(body3);
         qt.insert(body4);
         qt.update_mass();
-        assert_eq!(qt.subtrees.len(), 4);
-        assert_eq!(qt.subtrees.len(), 4);
-        assert_eq!(qt.total_mass, 4.0);
+        assert_eq!(qt.center_of_mass.unwrap().x, 120.25);
+        assert_eq!(qt.center_of_mass.unwrap().y, 115.25);
+        qt.insert(body5);
 
     }
 }
