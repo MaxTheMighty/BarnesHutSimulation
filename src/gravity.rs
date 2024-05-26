@@ -23,9 +23,9 @@ pub fn calculate_force(bodies: &mut[Body]){
     // bodies[1].acceleration.z += (force * dz)/bodies[1].mass;
 
     let mut d = (bodies[0].pos - bodies[1].pos); //r21
-    let d_mag = ((d.x * d.x) + (d.y * d.y) + (d.z * d.z) + EPSILON).sqrt();
+    let d_mag = ((d.x * d.x) + (d.y * d.y) + EPSILON).sqrt();
     // let d_mag = d.magnitude(); // | r21 |
-    let force: Vector3<f64> = d * ((G * bodies[0].mass * bodies[1].mass)/(d_mag.powi(3)));
+    let force: Vector2<f64> = d * ((G * bodies[0].mass * bodies[1].mass)/(d_mag.powi(3)));
 
     //TODO bring back the force vector to figure out the issue with DT
     // bodies[0].acceleration -= (force / bodies[0].mass);
@@ -45,7 +45,7 @@ pub fn apply_force( body_a: &mut Body){
     //there must be a better way
     body_a.force.x = 0.0f64;
     body_a.force.y = 0.0f64;
-    body_a.force.z = 0.0f64;
+
 
 }
 
