@@ -295,6 +295,22 @@ mod tests{
         assert_eq!(qt.subtrees.len(),4);
     }
     #[test]
+    fn center_node_mass(){
+        let rec: Rectangle = Rectangle::new(Vector2::new(0.0f64,0.0f64),Vector2::new(400.0f64,400.0f64));
+        let mut qt: Quadtree = Quadtree::new(rec,1);
+        qt.insert(Body::with_pos(Vector2::new(1.0,1.0)));
+        qt.insert(Body::with_pos(Vector2::new(10.0,10.0)));
+        qt.insert(Body::with_pos(Vector2::new(100.0,20.0)));
+        assert_eq!(qt.subtrees.len(),4);
+        assert_eq!(qt.subtrees[A].boundaries.br,Vector2::new(200.0,200.0));
+        qt.insert(Body::with_pos(Vector2::new(120.0,120.0)));
+        assert_eq!(qt.subtrees[A].subtrees.len(),4);
+        assert_eq!(qt.subtrees[A].subtrees[A].subtrees.len(),4);
+        qt.subtrees[A].update_mass();
+        assert_eq!(qt.subtrees[A].center_of_mass.unwrap().x,57.75);
+        assert_eq!(qt.subtrees[A].center_of_mass.unwrap().y,37.75);
+    }
+    #[test]
     fn center_mass(){
         let rec: Rectangle = Rectangle::new(Vector2::new(0.0f64,0.0f64),Vector2::new(400.0f64,400.0f64));
         let mut qt: Quadtree = Quadtree::new(rec,1);
@@ -302,16 +318,40 @@ mod tests{
         let body2: Body = Body::with_pos(Vector2::new(210.0,230.0));
         let body3: Body = Body::with_pos(Vector2::new(0.0,0.0));
         let body4: Body = Body::with_pos(Vector2::new(1.0,1.0));
-        let body5: Body = Body::with_pos(Vector2::new(205.0,205.0));
+        // let body5: Body = Body::with_pos(Vector2::new(205.0,205.0));
         qt.insert(body);
-        qt.update_mass();
+        // qt.update_mass();
         qt.insert(body2);
         qt.insert(body3);
         qt.insert(body4);
         qt.update_mass();
-        assert_eq!(qt.center_of_mass.unwrap().x, 120.25);
-        assert_eq!(qt.center_of_mass.unwrap().y, 115.25);
-        qt.insert(body5);
+        assert_eq!(qt.center_of_mass.unwrap().x, 115.25);
+        assert_eq!(qt.center_of_mass.unwrap().y, 120.25);
 
+
+
+        // qt.insert(body5);
+    }
+    #[test]
+    fn center_mass_two(){
+        let rec: Rectangle = Rectangle::new(Vector2::new(0.0f64,0.0f64),Vector2::new(400.0f64,400.0f64));
+        let mut qt: Quadtree = Quadtree::new(rec,1);
+        qt.bodies = Vec::new();
+        qt.subtrees = Vec::new();
+        let body5: Body = Body::with_pos(Vector2::new(1.0,1.0));
+        let body6: Body = Body::with_pos(Vector2::new(2.0,2.0));
+        let body7: Body = Body::with_pos(Vector2::new(3.0,3.0));
+        let body8: Body = Body::with_pos(Vector2::new(4.0,4.0));
+        let body9: Body = Body::with_pos(Vector2::new(100.0,100.0));
+
+        qt.insert(body5);
+        qt.insert(body6);
+        qt.insert(body7);
+        qt.insert(body8);
+        qt.insert(body9);
+        qt.update_mass();
+        //22 22
+        assert_eq!(qt.center_of_mass.unwrap().x,22.0);
+        assert_eq!(qt.center_of_mass.unwrap().y,22.0);
     }
 }
