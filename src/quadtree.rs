@@ -14,7 +14,7 @@ pub struct Rectangle {
 }
 #[derive(Debug)]
 pub struct Quadtree{
-    boundaries: Rectangle,
+    pub boundaries: Rectangle,
     limit: usize,
     pub subtrees: Vec<Box<Quadtree>>,
     bodies: Vec<Body>,
@@ -37,9 +37,13 @@ impl Rectangle{
                 obj_pos.y < self.br.y
     }
 
+
+
     pub fn midpoint(&self) -> Vector2<f64> {
         return Vector2::new(self.tl.x + ((self.br.x-self.tl.x)/2.0f64),self.tl.y + ((self.br.y-self.tl.y)/2.0f64));
     }
+
+
 
 
     pub fn subranges(&self) -> (Rectangle,Rectangle,Rectangle,Rectangle) {
