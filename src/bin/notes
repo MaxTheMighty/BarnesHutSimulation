@@ -1,0 +1,15 @@
+  # traverse the tree to get a list of particles in this cell and below
+  def particles(self):
+    # if this is a bottom level cell with a particle
+    if self.particle:
+      return [self.particle]
+    # else, if this cell has daughters, forward request to its daughters and
+    # accumulate their answers
+    elif self.daughters:
+      l = []
+      for daughter in self.daughters:
+        l.extend(daughter.particles())
+      return l
+    # else, this is a bottom level cell with no particle
+    else:
+      return []

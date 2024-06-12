@@ -7,7 +7,7 @@ const B: usize = 1;
 const C: usize = 2;
 const D: usize = 3;
 
-#[derive(PartialEq,Debug)]
+#[derive(PartialEq,Debug,Clone,Copy)]
 pub struct Rectangle {
     tl: Vector2<f64>,
     br: Vector2<f64>
@@ -15,11 +15,11 @@ pub struct Rectangle {
 #[derive(Debug)]
 pub struct Quadtree{
     pub boundaries: Rectangle,
-    limit: usize,
+    pub limit: usize,
     pub subtrees: Vec<Box<Quadtree>>,
-    bodies: Vec<Body>,
+    pub bodies: Vec<Body>,
     pub center_of_mass: Option<Vector2<f64>>,
-    total_mass: f64
+    pub total_mass: f64
 }
 
 
@@ -41,6 +41,14 @@ impl Rectangle{
 
     pub fn midpoint(&self) -> Vector2<f64> {
         return Vector2::new(self.tl.x + ((self.br.x-self.tl.x)/2.0f64),self.tl.y + ((self.br.y-self.tl.y)/2.0f64));
+    }
+
+    pub fn width(&self) -> f64 {
+        return self.br.x - self.tl.x;
+    }
+
+    pub fn height(&self) -> f64 {
+        return self.br.y - self.tl.y;
     }
 
 
@@ -148,21 +156,23 @@ impl Quadtree {
             None => { self.center_of_mass = Some(Vector2::new(0.0,0.0));}
         }
 
+        self.total_mass = 0.0f64;
         //then update the center of mass
         for body in &self.bodies{
 
             //why does this have to be as_mut() ???
             self.center_of_mass.as_mut().unwrap().x+=body.pos.x;
             self.center_of_mass.as_mut().unwrap().y+=body.pos.y;
+            self.total_mass+=body.mass;
 
         }
-        self.center_of_mass.as_mut().unwrap().x/=self.bodies.len() as f64;
-        self.center_of_mass.as_mut().unwrap().y/=self.bodies.len() as f64;
+        self.center_of_mass.as_mut().unwrap().x/=self.total_mass;
+        self.center_of_mass.as_mut().unwrap().y/=self.total_mass;
 
     }
 
     pub fn calculate_center_node(&mut self){
-        let mut non_empty_count: f64 = 0.0;
+        let mut non_empty_count: usize = 0;
         match self.center_of_mass{
             Some(_) => {},
             None => { self.center_of_mass = Some(Vector2::new(0.0,0.0));}
@@ -170,19 +180,22 @@ impl Quadtree {
         for subtree in &self.subtrees{
             match(subtree.center_of_mass){
                 Some(center) => {
-                    non_empty_count+=1.0;
-                    self.center_of_mass.as_mut().unwrap().x+=center.x;
-                    self.center_of_mass.as_mut().unwrap().y+=center.y;
+                    non_empty_count+=1;
+                    self.total_mass += subtree.total_mass;
+                    self.center_of_mass.as_mut().unwrap().x += center.x * subtree.total_mass;
+                    self.center_of_mass.as_mut().unwrap().y += center.y * subtree.total_mass;
                 },
                 None => {
                     continue;
                 }
             }
         }
-
         // self.center_of_mass.as_mut().unwrap().div_assign(non_empty_count);
-        self.center_of_mass.as_mut().unwrap().x/=non_empty_count;
-        self.center_of_mass.as_mut().unwrap().y/=non_empty_count;
+        if(non_empty_count > 0){
+            self.center_of_mass.as_mut().unwrap().x /= self.total_mass;
+            self.center_of_mass.as_mut().unwrap().y /= self.total_mass;
+        }
+
     }
 
 
@@ -272,9 +285,11 @@ mod tests{
     #[test]
     fn subtree_index(){
         let rec: Rectangle = Rectangle::new(Vector2::new(200.0f64,200.0f64),Vector2::new(400.0f64,400.0f64));
-        let qt: Quadtree = Quadtree::new(rec,5);
+        let mut qt: Quadtree = Quadtree::new(rec,5);
         let p1: Vector2<f64> = Vector2::new(303.0f64,350.0f64);
         let p2: Vector2<f64> = Vector2::new(203.0f64,250.0f64);
+        qt.split();
+        // println!("{:?}",qt.subtree_index(p1));
         assert_eq!(qt.subtree_index(p1).unwrap_or_default(),D);
         assert_eq!(qt.subtree_index(p2).unwrap_or_default(),A);
     }
@@ -357,5 +372,19 @@ mod tests{
         //22 22
         assert_eq!(qt.center_of_mass.unwrap().x,22.0);
         assert_eq!(qt.center_of_mass.unwrap().y,22.0);
+    }
+
+    #[test]
+    fn rectangle_mid(){
+        let rec: Rectangle = Rectangle::new(Vector2::new(0.0f64,0.0f64),Vector2::new(400.0f64,400.0f64));
+        assert_eq!(rec.width(),400.0f64);
+        assert_eq!(rec.height(),400.0f64);
+        let rec: Rectangle = Rectangle::new(Vector2::new(200.0f64,200.0f64),Vector2::new(400.0f64,400.0f64));
+        assert_eq!(rec.width(),200.0f64);
+        assert_eq!(rec.height(),200.0f64);
+        let rec: Rectangle = Rectangle::new(Vector2::new(32.0f64,98.0f64),Vector2::new(101.0f64,255.0f64));
+        assert_eq!(rec.width(),69.0f64);
+        assert_eq!(rec.height(),157.0f64);
+
     }
 }

@@ -30,15 +30,15 @@ impl Simulation {
         }
     }
 
-    pub fn cube(&mut self, length: f64, width: f64, _depth: f64, top_left: f64, count: u16){
-        let mut body: Body;
-        for _ in 0..count{
-            body = Body::new();
-            body.pos = Vector2::new(fastrand::f64()*length + top_left, fastrand::f64()*width + top_left);
-            body.mass = 1.0;
-            self.bodies.push(body);
-        }
-    }
+    // pub fn cube(&mut self, length: f64, width: f64, _depth: f64, top_left: f64, count: u16){
+    //     let mut body: Body;
+    //     for _ in 0..count{
+    //         body = Body::new();
+    //         body.pos = Vector2::new(fastrand::f64()*length + top_left, fastrand::f64()*width + top_left);
+    //         body.mass = 1.0;
+    //         self.bodies.push(body);
+    //     }
+    // }
 
 
     pub fn update(&mut self) {

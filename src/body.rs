@@ -1,6 +1,6 @@
 use cgmath::Vector2;
 
-#[derive(Debug)]
+#[derive(Debug,Copy,Clone)]
 pub struct Body {
     pub pos: Vector2<f64>,
     pub acceleration: Vector2<f64>,
