@@ -1,4 +1,3 @@
-use std::ops::{Add, AddAssign, Div, DivAssign};
 use cgmath::{Vector2};
 use crate::body::Body;
 
@@ -84,6 +83,16 @@ impl Quadtree {
         }
     }
 
+    pub fn clear(&mut self){
+        self.bodies.clear();
+        for subtree in self.subtrees.iter_mut(){
+            subtree.clear();
+        }
+        self.subtrees.clear();
+
+
+    }
+
 
     pub fn split(&mut self){
         //split into four
@@ -144,7 +153,7 @@ impl Quadtree {
 
 
     pub fn calculate_center_leaf(&mut self){
-        if(self.bodies.is_empty()){
+        if self.bodies.is_empty(){
             self.center_of_mass = None;
             return;
         }
@@ -178,7 +187,7 @@ impl Quadtree {
             None => { self.center_of_mass = Some(Vector2::new(0.0,0.0));}
         }
         for subtree in &self.subtrees{
-            match(subtree.center_of_mass){
+            match subtree.center_of_mass {
                 Some(center) => {
                     non_empty_count+=1;
                     self.total_mass += subtree.total_mass;
@@ -191,7 +200,7 @@ impl Quadtree {
             }
         }
         // self.center_of_mass.as_mut().unwrap().div_assign(non_empty_count);
-        if(non_empty_count > 0){
+        if non_empty_count > 0{
             self.center_of_mass.as_mut().unwrap().x /= self.total_mass;
             self.center_of_mass.as_mut().unwrap().y /= self.total_mass;
         }
@@ -385,6 +394,22 @@ mod tests{
         let rec: Rectangle = Rectangle::new(Vector2::new(32.0f64,98.0f64),Vector2::new(101.0f64,255.0f64));
         assert_eq!(rec.width(),69.0f64);
         assert_eq!(rec.height(),157.0f64);
+
+    }
+
+    #[test]
+    fn clear_quadtree(){
+        let rec: Rectangle = Rectangle::new(Vector2::new(0.0f64,0.0f64),Vector2::new(400.0f64,400.0f64));
+        let mut qt: Quadtree = Quadtree::new(rec,1);
+        let body3: Body = Body::with_pos(Vector2::new(0.0,0.0));
+        let body4: Body = Body::with_pos(Vector2::new(150.0,150.0));
+        qt.insert(body3);
+        qt.insert(body4);
+        println!("{:?}",qt.subtrees);
+        assert_eq!(qt.subtrees.len(), 4);
+        assert_eq!(qt.subtrees[A].subtrees[A].bodies.len(),1);
+        qt.clear();
+        assert_eq!(qt.subtrees.len(),0);
 
     }
 }

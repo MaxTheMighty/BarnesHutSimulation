@@ -3,6 +3,7 @@ use cgmath::Vector2;
 
 use barnes_hut::body::Body;
 use barnes_hut::gravity::*;
+use deepsize::DeepSizeOf;
 
 fn main() {
     let mut bodies: Vec<Body> = Vec::new();
