@@ -8,8 +8,8 @@ const D: usize = 3;
 
 #[derive(PartialEq,Debug,Clone,Copy)]
 pub struct Rectangle {
-    tl: Vector2<f64>,
-    br: Vector2<f64>
+    pub tl: Vector2<f64>,
+    pub br: Vector2<f64>
 }
 #[derive(Debug)]
 pub struct Quadtree{

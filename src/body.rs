@@ -60,6 +60,11 @@ impl Body{
 
 
 
+}
 
 
+impl std::fmt::Display for Body{
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result{
+        write!(f,"Pos: ({:0>20} {:0>20}) Force: ({:0>20} {:0>20})",self.pos.x,self.pos.y,self.force.x,self.force.y)
+    }
 }

@@ -101,8 +101,19 @@ impl BarnesHutRunner{
     }
 
     pub fn iterate(&mut self, quadtree: &mut Quadtree, bodies: &mut Vec<Body>){
+        quadtree.clear();
         self.create_tree(quadtree, bodies);
         self.update(quadtree,bodies);
     }
+
+    pub fn print_bodies(&self, quadtree: &Quadtree){
+        for body in &quadtree.bodies{
+            println!("{}",body);
+        }
+        for subtree in &quadtree.subtrees{
+            self.print_bodies(&subtree);
+        }
+    }
+
 }
 
