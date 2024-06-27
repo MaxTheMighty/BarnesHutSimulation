@@ -7,8 +7,6 @@ const DT: f64 = 0.01;
 const EPSILON: f64 = 1.0;
 //const MIN: f64 = 0.0f64;
 pub fn calculate_force(bodies: &mut[Body]){
-
-
     let d = bodies[0].pos - bodies[1].pos; //r21
     let d_mag = ((d.x * d.x) + (d.y * d.y) + EPSILON).sqrt();
     // let d_mag = d.magnitude(); // | r21 |
@@ -18,11 +16,12 @@ pub fn calculate_force(bodies: &mut[Body]){
     bodies[1].force+=force;
 }
 
-pub fn calculate_force_single(body_a: &mut Body, body_b: &Body){
+pub fn calculate_force_single(body_a: &mut Body, body_b: &mut Body){
     let d = body_a.pos - body_b.pos; //r21
     let d_mag = ((d.x * d.x) + (d.y * d.y) + EPSILON).sqrt();
     let force: Vector2<f64> = d * ((G * body_a.mass * body_b.mass)/(d_mag.powi(3)));
     body_a.force-=force;
+    body_b.force+=force;
 }
 
 //Although this is similar to the code above, I wanted to have a different function
@@ -44,7 +43,6 @@ pub fn apply_force( body_a: &mut Body){
     //there must be a better way
     body_a.force.x = 0.0f64;
     body_a.force.y = 0.0f64;
-
 }
 
 

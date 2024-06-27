@@ -1,4 +1,4 @@
-use std::ops::Deref;
+use std::ops::{Deref, DerefMut};
 use crate::quadtree::Quadtree;
 use crate::gravity;
 use cgmath::{MetricSpace, Vector2};
@@ -35,10 +35,10 @@ impl BarnesHutRunner{
 
     }
 
-    pub fn barnes_hut_force(&mut self, quadtree: &Quadtree, body: &mut Body){
+    pub fn barnes_hut_force(&mut self, quadtree: &mut Quadtree, body: &mut Body){
         if quadtree.subtrees.is_empty() {
             //just sum forces from bodies in subtree
-            for other_body in quadtree.bodies.iter(){
+            for other_body in quadtree.bodies.iter_mut(){
                 //ignore self
                 if body.pos == other_body.pos {
                     continue;
@@ -62,8 +62,8 @@ impl BarnesHutRunner{
                 if theta_body > self.theta {
                     //go further into the tree
                     //how can we do this if the runner owns the tree?
-                    for other_subtree in &quadtree.subtrees{
-                        self.barnes_hut_force(other_subtree.deref(),body);
+                    for other_subtree in quadtree.subtrees.iter_mut(){
+                        self.barnes_hut_force(other_subtree.deref_mut(),body);
                     }
                     return;
                 } else {
@@ -90,7 +90,7 @@ impl BarnesHutRunner{
         quadtree.update_mass();
     }
 
-    pub fn update(&mut self, quadtree: &Quadtree, bodies: &mut Vec<Body>){
+    pub fn update(&mut self, quadtree: &mut Quadtree, bodies: &mut Vec<Body>){
         for body in bodies.iter_mut(){
             self.barnes_hut_force(quadtree,body);
         }

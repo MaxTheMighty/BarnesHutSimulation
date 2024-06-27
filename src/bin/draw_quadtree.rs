@@ -1,5 +1,6 @@
 #![allow(warnings)]
 
+use std::env;
 use cgmath::Vector3;
 use cgmath::Vector2;
 use pixels::{Error, Pixels, SurfaceTexture};
@@ -23,22 +24,16 @@ const HEIGHT_F: f64 = HEIGHT as f64;
 
 const LIMIT: usize = (WIDTH * HEIGHT) as usize;
 
+const DEBUG: bool = false;
+
 fn main() -> Result<(), Error> {
-
-    let rec: Rectangle = Rectangle::new(Vector2::new(0.0f64,0.0f64),Vector2::new(400.0f64,400.0f64));
-    let mut qt: Quadtree = Quadtree::new(rec,1);
-    let mut bodies: Vec<Body> = Vec::new();
-    let mut runner: BarnesHutRunner = BarnesHutRunner::from_theta(0.5f64);
-    runner.create_tree(&mut qt, &bodies);
-    runner.generate_square(&mut bodies, 200, 100.0f64);
-
-
-
+    env::set_var("RUST_BACKTRACE", "FULL");
     //pre update
     env_logger::init();
     let event_loop = EventLoop::new();
     let mut input = WinitInputHelper::new();
     let mut my_buffer: Vec<(u8,u8,u8,u8)> = Vec::new();
+    let mut draw_boxes: bool = false;
     my_buffer.resize(LIMIT, (0,0,0,255));
     let window = {
         let size = LogicalSize::new(WIDTH as f64, HEIGHT as f64);
@@ -56,30 +51,28 @@ fn main() -> Result<(), Error> {
         Pixels::new(WIDTH, HEIGHT, surface_texture)?
     };
 
-    let rec: Rectangle = Rectangle::new(Vector2::new(0.0f64,0.0f64),Vector2::new(WIDTH_F,HEIGHT_F));
+    let rec: Rectangle = Rectangle::new(Vector2::new(0.0f64,0.0f64),Vector2::new(WIDTH_F - 100.0,HEIGHT_F - 100.0));
     let mut qt: Quadtree = Quadtree::new(rec,1);
     let mut bodies: Vec<Body> = Vec::new();
     let mut runner: BarnesHutRunner = BarnesHutRunner::from_theta(0.5f64);
-    // runner.create_tree(&mut qt, &bodies);
-    // runner.generate_square(&mut bodies, 200, 100.0f64);
-    bodies.push(Body::with_pos(Vector2::new(0.0,0.0)));
-    bodies.push(Body::with_pos(Vector2::new(1.0,1.0)));
-    bodies.push(Body::with_pos(Vector2::new(2.0,2.0)));
-    bodies.push(Body::with_pos(Vector2::new(150.0,150.0)));
+
+    // bodies.push(Body::with_mass_and_pos(10.0,Vector2::new(150.0,150.0)));
+    bodies.push(Body::with_mass_and_pos(1000.0,Vector2::new(500.0,50.0)));
+    bodies.push(Body::with_mass_and_pos(1.0,Vector2::new(450.0,100.0)));
+    bodies[1].velocity.y = -1.0;
+    bodies[1].velocity.x = 1.0;
+    // bodies.push(Body::with_mass_and_pos(1.0,Vector2::new(1.0,50.0)));
+    // bodies.push(Body::with_mass_and_pos(1.0,Vector2::new(1.1,50.0)));
 
     event_loop.run(move |event, _, control_flow| {
-        // let test_rec: Rectangle = Rectangle::new(Vector2::new(100.0,100.0), Vector2::new(200.0,200.0));
-        // draw_square(&mut my_buffer, &test_rec);
-
-        // runner.create_tree(&mut qt,&bodies);
-        // runner.iterate(&mut qt, &mut bodies);
-        // recursively_draw_tree(&mut my_buffer, &qt);
-
         // Draw the current frame
         if let Event::RedrawRequested(_) = event {
             runner.iterate(&mut qt, &mut bodies);
-            runner.print_bodies(&qt);
-            recursively_draw_tree(&mut my_buffer, &qt);
+            if(DEBUG) {runner.print_bodies(&qt);}
+            match(draw_boxes){
+                true => {recursively_draw_tree(&mut my_buffer, &qt);},
+                false => {recursively_draw_tree_no_box(&mut my_buffer, &qt);}
+            }
             draw(pixels.frame_mut(), &mut my_buffer);
             if let Err(err) = pixels.render() {
                 *control_flow = ControlFlow::Exit;
@@ -93,6 +86,11 @@ fn main() -> Result<(), Error> {
             if input.key_pressed(VirtualKeyCode::Escape) || input.close_requested() {
                 *control_flow = ControlFlow::Exit;
                 return;
+            }
+
+            if input.key_pressed(VirtualKeyCode::Space){
+                draw_boxes = !draw_boxes;
+                println!("draw boxes set to {draw_boxes}");
             }
 
             if input.mouse_pressed(0){
@@ -112,7 +110,27 @@ fn main() -> Result<(), Error> {
 
 }
 
+fn recursively_draw_tree_no_box(buffer: &mut Vec<(u8,u8,u8,u8)>, qt: &Quadtree){
+    // draw_square(buffer, &qt.boundaries);
+
+    for tree in &qt.subtrees{
+        recursively_draw_tree_no_box(buffer,&tree);
+    }
+
+    match(qt.bodies.is_empty()){
+        true => {}
+        false => {
+            for body in &qt.bodies{
+                let point_pos = calculate_buffer_pos(&body.pos);
+                buffer[point_pos] = (255,0,0,255);
+
+            }
+        }
+    }
+}
 fn recursively_draw_tree(buffer: &mut Vec<(u8,u8,u8,u8)>, qt: &Quadtree){
+
+
     draw_square(buffer, &qt.boundaries);
     for tree in &qt.subtrees{
         recursively_draw_tree(buffer,&tree);

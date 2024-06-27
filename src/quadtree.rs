@@ -6,6 +6,8 @@ const B: usize = 1;
 const C: usize = 2;
 const D: usize = 3;
 
+const MIN_SIZE: f64 = 1.0;
+
 #[derive(PartialEq,Debug,Clone,Copy)]
 pub struct Rectangle {
     pub tl: Vector2<f64>,
@@ -122,6 +124,11 @@ impl Quadtree {
         let mut body: Option<Body>;
         //if we split
         if self.bodies.len() > self.limit {
+
+            //so we dont keep dividing and get a stack overflow error
+            if(self.boundaries.width() <= MIN_SIZE){
+                return;
+            }
             self.split();
             while !self.bodies.is_empty() {
                 body = self.bodies.pop();

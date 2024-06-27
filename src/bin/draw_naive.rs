@@ -25,15 +25,17 @@ fn main() -> Result<(), Error> {
 
     let mut simulation = Simulation::new();
     // simulation.generate(2000, 500.0f64,200.0f64);
-    simulation.cube(600.0, 600.0, 60.0, 100.0, 2000);
+    // simulation.cube(600.0, 600.0, 60.0, 100.0, 2000);
     println!("{:?}",simulation.bodies.len());
     // simulation.square(50u16,300.0f64);
     // // simulation.bodies.push(Body::with_mass_and_pos(10.0f64,Vector3::new(510.0f64,500.0f64,0.0f64)));
-    simulation.bodies.push(Body::with_mass_and_pos(50000.0f64,Vector2::new(350.0f64,350.0f64)));
+    // simulation.bodies.push(Body::with_mass_and_pos(50000.0f64,Vector2::new(350.0f64,350.0f64)));
     // simulation.bodies.push(Body::with_mass_and_pos(20.0f64,Vector3::new(500.0f64,500.0f64,1000.0f64)));
     // simulation.bodies[1].velocity.x = -1.0f64;
-
-
+    simulation.bodies.push(Body::with_mass_and_pos(1000.0,Vector2::new(500.0,50.0)));
+    simulation.bodies.push(Body::with_mass_and_pos(1.0,Vector2::new(450.0,100.0)));
+    simulation.bodies[1].velocity.y = -1.0;
+    simulation.bodies[1].velocity.x = 1.0;
     //pre update
     env_logger::init();
     let event_loop = EventLoop::new();
@@ -88,7 +90,7 @@ fn main() -> Result<(), Error> {
                 }
 
                 // alpha = (255 - body.pos.z as u8).max(5);
-                my_buffer[index] = (255,255,255,alpha);
+                my_buffer[index] = (255,255,255,255);
             }
             window.request_redraw();
         }
