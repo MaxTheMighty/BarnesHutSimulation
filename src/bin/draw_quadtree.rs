@@ -55,12 +55,13 @@ fn main() -> Result<(), Error> {
     let mut qt: Quadtree = Quadtree::new(rec,1);
     let mut bodies: Vec<Body> = Vec::new();
     let mut runner: BarnesHutRunner = BarnesHutRunner::from_theta(0.5f64);
-
+    runner.generate_square(&mut bodies,50,200.0);
+    runner.generate_square(&mut bodies,50,600.0);
     // bodies.push(Body::with_mass_and_pos(10.0,Vector2::new(150.0,150.0)));
-    bodies.push(Body::with_mass_and_pos(1000.0,Vector2::new(500.0,50.0)));
-    bodies.push(Body::with_mass_and_pos(1.0,Vector2::new(450.0,100.0)));
-    bodies[1].velocity.y = -1.0;
-    bodies[1].velocity.x = 1.0;
+    // bodies.push(Body::with_mass_and_pos(1000.0,Vector2::new(500.0,50.0)));
+    // bodies.push(Body::with_mass_and_pos(1.0,Vector2::new(450.0,100.0)));
+    // bodies[1].velocity.y = -1.0;
+    // bodies[1].velocity.x = 1.0;
     // bodies.push(Body::with_mass_and_pos(1.0,Vector2::new(1.0,50.0)));
     // bodies.push(Body::with_mass_and_pos(1.0,Vector2::new(1.1,50.0)));
 

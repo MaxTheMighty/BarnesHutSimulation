@@ -121,18 +121,19 @@ impl Quadtree {
         }
 
 
-        let mut body: Option<Body>;
+        let mut body_opt: Option<Body>;
         //if we split
         if self.bodies.len() > self.limit {
 
             //so we dont keep dividing and get a stack overflow error
             if(self.boundaries.width() <= MIN_SIZE){
+                self.bodies.push(body);
                 return;
             }
             self.split();
             while !self.bodies.is_empty() {
-                body = self.bodies.pop();
-                match body {
+                body_opt = self.bodies.pop();
+                match body_opt {
                     Some(body) => {self.insert(body)},
                     None => {}
                 }
