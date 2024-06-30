@@ -1,3 +1,4 @@
+use std::f32::consts::PI;
 use std::ops::{Deref, DerefMut};
 use crate::quadtree::Quadtree;
 use crate::gravity;
@@ -6,6 +7,7 @@ use crate::body::Body;
 pub struct BarnesHutRunner {
 
     pub theta: f64,
+    pub paused: bool
 }
 
 
@@ -13,13 +15,14 @@ impl BarnesHutRunner{
     pub fn new() -> BarnesHutRunner{
         Self {
             theta: 0.5,
+            paused: false
         }
     }
 
     pub fn from_theta(theta: f64) -> BarnesHutRunner {
         Self {
             theta,
-
+            paused: false
         }
     }
 
@@ -28,10 +31,27 @@ impl BarnesHutRunner{
     pub fn generate_square(&mut self, bodies: &mut Vec<Body>, length: u16, top_left: f64){
         for x in 0..length{
             for y in 0..length{
-                bodies.push(Body::with_mass_and_pos(1.0, Vector2::new(x as f64 + top_left, y as f64 + top_left)));
+                bodies.push(Body::with_mass_and_pos(10.0, Vector2::new(x as f64 + top_left, y as f64 + top_left)));
             }
         }
+    }
 
+    pub fn generate_circle(&mut self, bodies: &mut Vec<Body>, center: f64, radius: f64){
+        let mut x_pos: f64 = 0.0;
+        let mut y_pos: f64 = 0.0;
+
+        for ring in 1..radius as u16{
+            for i in 0..360{
+                /*
+                            x1 = r * cos(angle * PI / 180);
+                    y1 = r * sin(angle * PI / 180);
+
+                 */
+                x_pos = (radius-ring as f64 * f64::cos(i as f64 * std::f64::consts::PI / 180.0)) + center as f64;
+                y_pos = (radius-ring as f64 * f64::sin(i as f64 * std::f64::consts::PI / 180.0)) + center as f64;
+                bodies.push(Body::with_mass_and_pos(1.0,Vector2::new(x_pos,y_pos)));
+            }
+        }
 
     }
 
@@ -101,9 +121,21 @@ impl BarnesHutRunner{
     }
 
     pub fn iterate(&mut self, quadtree: &mut Quadtree, bodies: &mut Vec<Body>){
+        if(self.paused){
+            return;
+        }
+
+        self.force_iterate(quadtree,bodies);
+    }
+
+    pub fn force_iterate(&mut self, quadtree: &mut Quadtree, bodies: &mut Vec<Body>){
         quadtree.clear();
         self.create_tree(quadtree, bodies);
         self.update(quadtree,bodies);
+    }
+
+    pub fn toggle_pause(&mut self){
+        self.paused = !self.paused;
     }
 
     pub fn print_bodies(&self, quadtree: &Quadtree){

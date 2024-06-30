@@ -34,7 +34,7 @@ fn main() -> Result<(), Error> {
     my_buffer.resize(LIMIT, (0,0,0,255));
     my_buffer.resize(LIMIT, (0,0,0,255));
     let window = {
-        let size = LogicalSize::new(WIDTH as f64, HEIGHT as f64);
+        let size = LogicalSize::new(WIDTH as f64 * 2.0, HEIGHT as f64);
         WindowBuilder::new()
             .with_title("Hello Pixels")
             .with_inner_size(size)
@@ -49,14 +49,12 @@ fn main() -> Result<(), Error> {
         Pixels::new(WIDTH, HEIGHT, surface_texture)?
     };
 
-    //TODO: change quadtree vec to smallvec or just an array
-
     let rec: Rectangle = Rectangle::new(Vector2::new(0.0f64,0.0f64),Vector2::new(WIDTH_F ,HEIGHT_F));
     let mut qt: Quadtree = Quadtree::new(rec,1);
     let mut bodies: Vec<Body> = Vec::new();
     let mut runner: BarnesHutRunner = BarnesHutRunner::from_theta(0.5f64);
-    runner.generate_circle(&mut bodies,350.0,30.0);
-    runner.generate_circle(&mut bodies,550.0,30.0);
+    runner.generate_circle(&mut bodies,350.0,15.0);
+    runner.generate_circle(&mut bodies,550.0,15.0);
     runner.create_tree(&mut qt,&mut bodies);
     runner.toggle_pause();
     println!("{:?}",bodies.len());
@@ -126,7 +124,7 @@ fn recursively_draw_tree(buffer: &mut Vec<(u8,u8,u8,u8)>, qt: &Quadtree){
     draw_bodies(buffer,&qt.bodies);
 }
 
-fn draw_bodies(buffer: &mut Vec<(u8,u8,u8,u8)>, bodies: &Vec<Body>){
+fn draw_bodies(buffer: &mut Vec<(u8,u8,u8,u8)>, bodies: &Vec<Body>, right: bool){
     match(bodies.is_empty()){
         true => {}
         false => {
@@ -135,6 +133,9 @@ fn draw_bodies(buffer: &mut Vec<(u8,u8,u8,u8)>, bodies: &Vec<Body>){
                     continue;
                 }
                 let point_pos = calculate_buffer_pos(&body.pos);
+                if right{
+                    point_pos
+                }
                 update_pixel_heat(buffer, point_pos);
 
             }
