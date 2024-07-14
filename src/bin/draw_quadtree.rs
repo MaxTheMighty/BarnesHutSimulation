@@ -11,6 +11,7 @@ use winit_input_helper::WinitInputHelper;
 use barnes_hut::bh_runner::BarnesHutRunner;
 use barnes_hut::body::Body;
 use barnes_hut::quadtree::{Quadtree, Rectangle};
+use barnes_hut::canvas::Canvas;
 const DEBUG: bool = false;
 
 const WIDTH: u32 = 1000;
@@ -29,10 +30,11 @@ fn main() -> Result<(), Error> {
     env_logger::init();
     let event_loop = EventLoop::new();
     let mut input = WinitInputHelper::new();
-    let mut my_buffer: Vec<(u8,u8,u8,u8)> = Vec::new();
+    // let mut my_buffer: Vec<(u8,u8,u8,u8)> = Vec::new();
     let mut draw_boxes: bool = false;
-    my_buffer.resize(LIMIT, (0,0,0,255));
-    my_buffer.resize(LIMIT, (0,0,0,255));
+    // my_buffer.resize(LIMIT, (0,0,0,255));
+    // my_buffer.resize(LIMIT, (0,0,0,255));
+    let mut canvas: Canvas = Canvas::new(WIDTH as usize,HEIGHT as usize);
     let window = {
         let size = LogicalSize::new(WIDTH as f64, HEIGHT as f64);
         WindowBuilder::new()
@@ -55,9 +57,13 @@ fn main() -> Result<(), Error> {
     let mut qt: Quadtree = Quadtree::new(rec,1);
     let mut bodies: Vec<Body> = Vec::new();
     let mut runner: BarnesHutRunner = BarnesHutRunner::from_theta(0.5f64);
-    runner.generate_circle(&mut bodies,350.0,30.0);
-    runner.generate_circle(&mut bodies,550.0,30.0);
+    runner.generate_circle(&mut bodies,350.0,15.0);
+    runner.generate_circle(&mut bodies,550.0,15.0);
     runner.create_tree(&mut qt,&mut bodies);
+    // qt.split();
+    // for mut st in &mut qt.subtrees{
+    //     st.split();
+    // }
     runner.toggle_pause();
     println!("{:?}",bodies.len());
     // return Ok(());
@@ -67,10 +73,11 @@ fn main() -> Result<(), Error> {
             runner.iterate(&mut qt, &mut bodies);
             if(DEBUG) {runner.print_bodies(&qt);}
             match(draw_boxes){
-                true => {recursively_draw_tree(&mut my_buffer, &qt);},
-                false => {recursively_draw_tree_no_box(&mut my_buffer, &qt);}
+                true => {recursively_draw_tree(&mut canvas, &qt);},
+                false => {recursively_draw_tree_no_box(&mut canvas, &qt);}
             }
-            draw(pixels.frame_mut(), &mut my_buffer);
+            draw(pixels.frame_mut(), &mut canvas);
+            canvas.clear();
             if let Err(err) = pixels.render() {
                 *control_flow = ControlFlow::Exit;
                 return;
@@ -111,22 +118,23 @@ fn main() -> Result<(), Error> {
 
 }
 
-fn recursively_draw_tree_no_box(buffer: &mut Vec<(u8,u8,u8,u8)>, qt: &Quadtree){
+fn recursively_draw_tree_no_box(canvas: &mut Canvas, qt: &Quadtree){
     for tree in &qt.subtrees{
-        recursively_draw_tree_no_box(buffer,&tree);
+        recursively_draw_tree_no_box(canvas,&tree);
     }
-    draw_bodies(buffer,&qt.bodies);
+    draw_bodies(canvas,&qt.bodies);
 }
-fn recursively_draw_tree(buffer: &mut Vec<(u8,u8,u8,u8)>, qt: &Quadtree){
+fn recursively_draw_tree(canvas: &mut Canvas, qt: &Quadtree){
 
-    draw_square(buffer, &qt.boundaries);
+    // draw_square(buffer, &qt.boundaries);
+    canvas.draw_square(qt.boundaries.tl.x.round() as usize, qt.boundaries.tl.y.round() as usize, qt.boundaries.width() as usize, &(255,255,255,255));
     for tree in &qt.subtrees{
-        recursively_draw_tree(buffer,&tree);
+        recursively_draw_tree(canvas,&tree);
     }
-    draw_bodies(buffer,&qt.bodies);
+    draw_bodies(canvas,&qt.bodies);
 }
 
-fn draw_bodies(buffer: &mut Vec<(u8,u8,u8,u8)>, bodies: &Vec<Body>){
+fn draw_bodies(canvas: &mut Canvas, bodies: &Vec<Body>){
     match(bodies.is_empty()){
         true => {}
         false => {
@@ -134,9 +142,9 @@ fn draw_bodies(buffer: &mut Vec<(u8,u8,u8,u8)>, bodies: &Vec<Body>){
                 if(!within_buffer(&body.pos)){
                     continue;
                 }
-                let point_pos = calculate_buffer_pos(&body.pos);
-                update_pixel_heat(buffer, point_pos);
-
+                // let point_pos = calculate_buffer_pos(&body.pos);
+                // update_pixel_heat(buffer, point_pos);
+                canvas.set_color(body.pos.x.round() as usize, body.pos.y.round() as usize, &(255,255,255,255));
             }
         }
     }
@@ -194,14 +202,13 @@ fn calculate_buffer_pos(pos: &Vector2<f64>) -> usize{
 }
 
 
-fn draw(buffer: &mut [u8], my_buffer: &mut Vec<(u8,u8,u8,u8)>){
+fn draw(buffer: &mut [u8], canvas: &mut Canvas){
     for (i,mut pixel) in buffer.chunks_exact_mut(4).enumerate(){
-        pixel[0] = my_buffer[i].0;
-        pixel[1] = my_buffer[i].1;
-        pixel[2] = my_buffer[i].2;
-        pixel[3] = my_buffer[i].3;
+        pixel[0] = canvas.buffer[i].0;
+        pixel[1] = canvas.buffer[i].1;
+        pixel[2] = canvas.buffer[i].2;
+        pixel[3] = canvas.buffer[i].3;
 
-        my_buffer[i] = (0,0,0,0);
     }
 }
 
