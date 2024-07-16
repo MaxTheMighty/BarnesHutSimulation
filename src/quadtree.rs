@@ -126,7 +126,7 @@ impl Quadtree {
         if self.bodies.len() > self.limit {
 
             //so we dont keep dividing and get a stack overflow error
-            if(self.boundaries.width() <= MIN_SIZE){
+            if self.boundaries.width() <= MIN_SIZE {
                 self.bodies.push(body);
                 return;
             }

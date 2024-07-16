@@ -42,7 +42,7 @@ fn main() -> Result<(), Error> {
     let mut draw_boxes: bool = false;
     my_buffer.resize(LIMIT, (0,0,0,255));
     let window = {
-        let size = LogicalSize::new(BUFFER_WIDTH_F, BUFFER_HEIGHT_F + 1.0);
+        let size = LogicalSize::new(BUFFER_WIDTH_F, BUFFER_HEIGHT_F);
         WindowBuilder::new()
             .with_title("Hello Pixels")
             .with_inner_size(size)
@@ -54,7 +54,7 @@ fn main() -> Result<(), Error> {
     let mut pixels = {
         let window_size = window.inner_size();
         let surface_texture = SurfaceTexture::new(window_size.width, window_size.height, &window);
-        Pixels::new(BUFFER_WIDTH, BUFFER_HEIGHT + 1, surface_texture)?
+        Pixels::new(BUFFER_WIDTH, BUFFER_HEIGHT, surface_texture)?
     };
 
 

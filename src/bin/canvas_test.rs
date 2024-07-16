@@ -17,9 +17,9 @@ fn main()  -> Result<(), Error> {
     env_logger::init();
     let event_loop = EventLoop::new();
     let mut input = WinitInputHelper::new();
-    let mut canvas: Canvas = Canvas::new(1000,1000);
+    let mut canvas: Canvas = Canvas::new(1001,1001,(0,0,0,0));
     let window = {
-        let size = LogicalSize::new(1000, 1000);
+        let size = LogicalSize::new(1001, 1001);
         WindowBuilder::new()
             .with_title("Hello Pixels")
             .with_inner_size(size)
@@ -31,7 +31,7 @@ fn main()  -> Result<(), Error> {
     let mut pixels = {
         let window_size = window.inner_size();
         let surface_texture = SurfaceTexture::new(window_size.width, window_size.height, &window);
-        Pixels::new(1000, 1000, surface_texture)?
+        Pixels::new(1001, 1001, surface_texture)?
     };
 
 
@@ -43,10 +43,12 @@ fn main()  -> Result<(), Error> {
 
         // canvas.set_color(0,1000,&(255,0,0,255));
         // canvas.draw_square(5,3,3,&(255,255,255,255));
-        canvas.draw_square(0,0,500,&(255,255,255,255));
-        canvas.draw_square(500,0,500,&(255,255,255,255));
-        canvas.draw_square(500,500,500,&(255,255,255,255));
-        canvas.draw_square(0,500,500,&(255,255,255,255));
+        // canvas.draw_square(0,0,500,&(255,255,255,255));
+        // canvas.draw_square(500,0,500,&(255,255,255,255));
+        // canvas.set_color_safe(10000,0,&(255,255,255,255));
+        // canvas.draw_square(500,500,400,&(255,255,255,255));
+        canvas.draw_square_safe(500,500,400,&(255,255,255,255));
+        // canvas.draw_square(0,500,500,&(255,255,255,255));
         // Draw the current frame
         if let Event::RedrawRequested(_) = event {
 

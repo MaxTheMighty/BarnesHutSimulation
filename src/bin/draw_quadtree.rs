@@ -1,6 +1,8 @@
 #![allow(warnings)]
 
 use std::env;
+use std::ops::{Deref, DerefMut};
+use cgmath::num_traits::Saturating;
 use cgmath::Vector2;
 use pixels::{Error, Pixels, SurfaceTexture};
 use winit::dpi::LogicalSize;
@@ -34,7 +36,7 @@ fn main() -> Result<(), Error> {
     let mut draw_boxes: bool = false;
     // my_buffer.resize(LIMIT, (0,0,0,255));
     // my_buffer.resize(LIMIT, (0,0,0,255));
-    let mut canvas: Canvas = Canvas::new(WIDTH as usize,HEIGHT as usize);
+    let mut canvas: Canvas = Canvas::new(WIDTH as usize,HEIGHT as usize, (0,0,0,0));
     let window = {
         let size = LogicalSize::new(WIDTH as f64, HEIGHT as f64);
         WindowBuilder::new()
@@ -59,11 +61,12 @@ fn main() -> Result<(), Error> {
     let mut runner: BarnesHutRunner = BarnesHutRunner::from_theta(0.5f64);
     runner.generate_circle(&mut bodies,350.0,15.0);
     runner.generate_circle(&mut bodies,550.0,15.0);
+    // runner.generate_circle(&mut bodies, 5.0,7.0);
     runner.create_tree(&mut qt,&mut bodies);
     // qt.split();
     // for mut st in &mut qt.subtrees{
     //     st.split();
-    // }
+    // }w
     runner.toggle_pause();
     println!("{:?}",bodies.len());
     // return Ok(());
@@ -127,7 +130,7 @@ fn recursively_draw_tree_no_box(canvas: &mut Canvas, qt: &Quadtree){
 fn recursively_draw_tree(canvas: &mut Canvas, qt: &Quadtree){
 
     // draw_square(buffer, &qt.boundaries);
-    canvas.draw_square(qt.boundaries.tl.x.round() as usize, qt.boundaries.tl.y.round() as usize, qt.boundaries.width() as usize, &(255,255,255,255));
+    canvas.draw_square_safe(qt.boundaries.tl.x.round() as usize, qt.boundaries.tl.y.round() as usize, qt.boundaries.width() as usize, &(255,255,255,255));
     for tree in &qt.subtrees{
         recursively_draw_tree(canvas,&tree);
     }
@@ -143,25 +146,36 @@ fn draw_bodies(canvas: &mut Canvas, bodies: &Vec<Body>){
                     continue;
                 }
                 // let point_pos = calculate_buffer_pos(&body.pos);
-                // update_pixel_heat(buffer, point_pos);
-                canvas.set_color(body.pos.x.round() as usize, body.pos.y.round() as usize, &(255,255,255,255));
+                update_pixel_heat(canvas, body.pos.x.round() as usize, body.pos.y.round() as usize); //not a fan of this casting
             }
         }
     }
 }
 
-fn update_pixel_heat(buffer: &mut Vec<(u8,u8,u8,u8)>, pos: usize){
-    if(buffer[pos].3 == 0){
-        buffer[pos] = (0,0,255,255);
+fn update_pixel_heat(canvas: &mut Canvas, x_pos: usize, y_pos: usize){
+    // if(buffer[pos].3 == 0){
+    //     buffer[pos] = (0,0,255,255);
+    // } else {
+    //     buffer[pos].1+=10;
+    //     // buffer[pos].2-=10;
+    //     if(buffer[pos].1 > 255){
+    //         buffer[pos].1 = 255;
+    //     }
+    //     // if(buffer[pos].2 < 0){
+    //     //     buffer[pos].2 = 0;
+    //     // }
+    // }
+
+    if(!canvas.pos_valid(x_pos,y_pos)){
+        return;
+    }
+    if(canvas.is_default(x_pos,y_pos)){
+        canvas.set_color(x_pos,y_pos,&(0,0,255,255));
     } else {
-        buffer[pos].1+=10;
-        // buffer[pos].2-=10;
-        if(buffer[pos].1 > 255){
-            buffer[pos].1 = 255;
-        }
-        // if(buffer[pos].2 < 0){
-        //     buffer[pos].2 = 0;
-        // }
+        let color_ref = canvas.get_color_mut(x_pos,y_pos);
+        (*color_ref).1 = (*color_ref).1.saturating_add(10);
+        // *color_ref.2.saturating_sub()
+
     }
 }
 
