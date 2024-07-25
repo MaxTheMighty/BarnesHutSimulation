@@ -59,10 +59,15 @@ impl Rectangle{
         let midpoint: Vector2<f64> = self.midpoint();
         let x_diff_hf: f64 = midpoint.x - self.tl.x;
         let y_diff_hf: f64 = midpoint.y - self.tl.y;
-        let subrect_b_tl = Vector2::new(midpoint.x,midpoint.y-y_diff_hf);
-        let subrect_c_br = Vector2::new(midpoint.x,midpoint.y+y_diff_hf);
-        let subrect_b_br = Vector2::new(midpoint.x+x_diff_hf,midpoint.y);
-        let subrect_c_tl = Vector2::new(midpoint.x-x_diff_hf,midpoint.y);
+        let subrect_b_tl = Vector2::new(midpoint.x,self.tl.y);
+        let subrect_b_br = Vector2::new(self.br.x,midpoint.y);
+        let subrect_c_tl = Vector2::new(self.tl.x,midpoint.y);
+        let subrect_c_br = Vector2::new(midpoint.x,self.br.y);
+
+        // let subrect_b_br = Vector2::new(midpoint.x+x_diff_hf,midpoint.y);
+        // let subrect_c_tl = Vector2::new(midpoint.x-x_diff_hf,midpoint.y);
+
+
         let subrect_a = Rectangle::new(self.tl,midpoint);
         let subrect_b = Rectangle::new(subrect_b_tl,subrect_b_br);
         let subrect_c = Rectangle::new(subrect_c_tl,subrect_c_br);
@@ -92,8 +97,11 @@ impl Quadtree {
         }
         self.subtrees.clear();
 
-
     }
+
+
+
+
 
 
     pub fn split(&mut self){
@@ -234,6 +242,13 @@ impl Quadtree {
             } else {
                 return Some(D);
             }
+        }
+    }
+
+    pub fn print_boundaries(&self, spacing: String){
+        println!("{} {:?}",spacing,self.boundaries);
+        for st in &self.subtrees{
+            st.print_boundaries(spacing.to_owned() + "  ");
         }
     }
 
@@ -420,4 +435,18 @@ mod tests{
         assert_eq!(qt.subtrees.len(),0);
 
     }
+
+    #[test]
+    fn test_non_positive_boundaries(){
+        let rec: Rectangle = Rectangle::new(Vector2::new(-100.0f64,-100.0f64),Vector2::new(100.0f64,100.0f64));
+        let mut qt: Quadtree = Quadtree::new(rec,1);
+        qt.split();
+        assert_eq!(qt.subtrees.len(), 4);
+
+        //finish
+
+        // assert_eq!(qt.subtrees[A].boundaries.tl.x)
+    }
+
+
 }

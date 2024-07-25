@@ -47,7 +47,7 @@ fn main()  -> Result<(), Error> {
         // canvas.draw_square(500,0,500,&(255,255,255,255));
         // canvas.set_color_safe(10000,0,&(255,255,255,255));
         // canvas.draw_square(500,500,400,&(255,255,255,255));
-        canvas.draw_square_safe(500,500,400,&(255,255,255,255));
+        // canvas.draw_square_safe(500,500,400,&(255,255,255,255));
         // canvas.draw_square(0,500,500,&(255,255,255,255));
         // Draw the current frame
         if let Event::RedrawRequested(_) = event {

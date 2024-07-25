@@ -16,13 +16,13 @@ use barnes_hut::quadtree::{Quadtree, Rectangle};
 use barnes_hut::canvas::Canvas;
 const DEBUG: bool = false;
 
-const WIDTH: u32 = 1000;
+const WIDTH: u32 = 2500;
 const WIDTH_F: f64 = WIDTH as f64;
-const HEIGHT: u32 = 1000;
+const HEIGHT: u32 = 1400;
 
 const HEIGHT_F: f64 = HEIGHT as f64;
 
-const LIMIT: usize = ((WIDTH + 1) * (HEIGHT + 1)) as usize;
+const LIMIT: u32 = ((WIDTH + 1)) * ((HEIGHT + 1) );
 
 
 
@@ -32,19 +32,17 @@ fn main() -> Result<(), Error> {
     env_logger::init();
     let event_loop = EventLoop::new();
     let mut input = WinitInputHelper::new();
-    // let mut my_buffer: Vec<(u8,u8,u8,u8)> = Vec::new();
     let mut draw_boxes: bool = false;
-    // my_buffer.resize(LIMIT, (0,0,0,255));
-    // my_buffer.resize(LIMIT, (0,0,0,255));
-    let mut canvas: Canvas = Canvas::new(WIDTH as usize,HEIGHT as usize, (0,0,0,0));
+    let mut canvas: Canvas = Canvas::new(WIDTH,HEIGHT, (0,0,0,0));
     let window = {
-        let size = LogicalSize::new(WIDTH as f64, HEIGHT as f64);
+        let size = LogicalSize::new(WIDTH_F, HEIGHT_F);
         WindowBuilder::new()
             .with_title("Hello Pixels")
             .with_inner_size(size)
             .with_min_inner_size(size)
             .build(&event_loop)
             .unwrap()
+
     };
 
     let mut pixels = {
@@ -59,14 +57,13 @@ fn main() -> Result<(), Error> {
     let mut qt: Quadtree = Quadtree::new(rec,1);
     let mut bodies: Vec<Body> = Vec::new();
     let mut runner: BarnesHutRunner = BarnesHutRunner::from_theta(0.5f64);
-    runner.generate_circle(&mut bodies,350.0,15.0);
-    runner.generate_circle(&mut bodies,550.0,15.0);
-    // runner.generate_circle(&mut bodies, 5.0,7.0);
+    runner.generate_circle(&mut bodies,1220.0,700.0,30.0);
+    // runner.generate_circle(&mut bodies,0.0,0.0,1000.0);
+    runner.generate_circle(&mut bodies,1270.0,700.0,30.0);
+    // bodies.push(Body::with_mass_and_pos(10000000.0,Vector2::new(1350.0,700.0)));
+    // runner.generate_square(&mut bodies, 100, 1250.0 - 100.0, 720.0 - 100.0);
+    runner.resize(&mut qt,&mut bodies);
     runner.create_tree(&mut qt,&mut bodies);
-    // qt.split();
-    // for mut st in &mut qt.subtrees{
-    //     st.split();
-    // }w
     runner.toggle_pause();
     println!("{:?}",bodies.len());
     // return Ok(());
@@ -75,10 +72,16 @@ fn main() -> Result<(), Error> {
         if let Event::RedrawRequested(_) = event {
             runner.iterate(&mut qt, &mut bodies);
             if(DEBUG) {runner.print_bodies(&qt);}
+
             match(draw_boxes){
                 true => {recursively_draw_tree(&mut canvas, &qt);},
                 false => {recursively_draw_tree_no_box(&mut canvas, &qt);}
             }
+            // canvas.draw_square_safe(qt.boundaries.tl.x.round() as usize, qt.boundaries.tl.y.round() as usize, qt.boundaries.width() as usize, qt.boundaries.height() as usize,&(255,255,255,255));
+            // canvas.draw_square_safe(st.boundaries.tl.x.round() as usize, st.boundaries.tl.y.round() as usize, st.boundaries.width() as usize, st.boundaries.height() as usize,&(255,255,255,255));
+            // for st in &qt.subtrees{
+            //     canvas.draw_square_safe(st.boundaries.tl.x.round() as usize, st.boundaries.tl.y.round() as usize, st.boundaries.width() as usize, st.boundaries.height() as usize,&(255,255,255,255));
+            // }
             draw(pixels.frame_mut(), &mut canvas);
             canvas.clear();
             if let Err(err) = pixels.render() {
@@ -102,6 +105,7 @@ fn main() -> Result<(), Error> {
 
             if input.key_pressed(VirtualKeyCode::P){
                 runner.toggle_pause();
+                println!("pause set to {:?}",runner.paused);
             }
 
             if input.mouse_pressed(0){
@@ -130,7 +134,7 @@ fn recursively_draw_tree_no_box(canvas: &mut Canvas, qt: &Quadtree){
 fn recursively_draw_tree(canvas: &mut Canvas, qt: &Quadtree){
 
     // draw_square(buffer, &qt.boundaries);
-    canvas.draw_square_safe(qt.boundaries.tl.x.round() as usize, qt.boundaries.tl.y.round() as usize, qt.boundaries.width() as usize, &(255,255,255,255));
+    canvas.draw_square_safe(qt.boundaries.tl.x.round() as i32, qt.boundaries.tl.y.round() as i32, qt.boundaries.width() as i32, qt.boundaries.height() as i32,&(255,255,255,255));
     for tree in &qt.subtrees{
         recursively_draw_tree(canvas,&tree);
     }
@@ -142,38 +146,27 @@ fn draw_bodies(canvas: &mut Canvas, bodies: &Vec<Body>){
         true => {}
         false => {
             for body in bodies{
-                if(!within_buffer(&body.pos)){
-                    continue;
-                }
                 // let point_pos = calculate_buffer_pos(&body.pos);
-                update_pixel_heat(canvas, body.pos.x.round() as usize, body.pos.y.round() as usize); //not a fan of this casting
+                update_pixel_heat(canvas, body.pos.x.round() as i32, body.pos.y.round() as i32); //not a fan of this casting
             }
         }
     }
 }
 
-fn update_pixel_heat(canvas: &mut Canvas, x_pos: usize, y_pos: usize){
-    // if(buffer[pos].3 == 0){
-    //     buffer[pos] = (0,0,255,255);
-    // } else {
-    //     buffer[pos].1+=10;
-    //     // buffer[pos].2-=10;
-    //     if(buffer[pos].1 > 255){
-    //         buffer[pos].1 = 255;
-    //     }
-    //     // if(buffer[pos].2 < 0){
-    //     //     buffer[pos].2 = 0;
-    //     // }
-    // }
+fn update_pixel_heat(canvas: &mut Canvas, x_pos: i32, y_pos: i32){
 
     if(!canvas.pos_valid(x_pos,y_pos)){
         return;
     }
     if(canvas.is_default(x_pos,y_pos)){
-        canvas.set_color(x_pos,y_pos,&(0,0,255,255));
+        canvas.set_color(x_pos,y_pos,&(0,0,255,60));
     } else {
         let color_ref = canvas.get_color_mut(x_pos,y_pos);
+        (*color_ref).3 = (*color_ref).3.saturating_add(10);
         (*color_ref).1 = (*color_ref).1.saturating_add(10);
+        if((*color_ref).1 == 255){
+            (*color_ref).0 = (*color_ref).0.saturating_add(10);
+        }
         // *color_ref.2.saturating_sub()
 
     }
