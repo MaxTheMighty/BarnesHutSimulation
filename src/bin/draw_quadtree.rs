@@ -16,9 +16,9 @@ use barnes_hut::quadtree::{Quadtree, Rectangle};
 use barnes_hut::canvas::Canvas;
 const DEBUG: bool = false;
 
-const WIDTH: u32 = 2500;
+const WIDTH: u32 = 1000;
 const WIDTH_F: f64 = WIDTH as f64;
-const HEIGHT: u32 = 1400;
+const HEIGHT: u32 = 1000;
 
 const HEIGHT_F: f64 = HEIGHT as f64;
 
@@ -57,9 +57,9 @@ fn main() -> Result<(), Error> {
     let mut qt: Quadtree = Quadtree::new(rec,1);
     let mut bodies: Vec<Body> = Vec::new();
     let mut runner: BarnesHutRunner = BarnesHutRunner::from_theta(0.5f64);
-    runner.generate_circle(&mut bodies,1220.0,700.0,30.0);
+    runner.generate_circle(&mut bodies,450.0,500.0,30.0);
     // runner.generate_circle(&mut bodies,0.0,0.0,1000.0);
-    runner.generate_circle(&mut bodies,1270.0,700.0,30.0);
+    runner.generate_circle(&mut bodies,550.0,500.0,30.0);
     // bodies.push(Body::with_mass_and_pos(10000000.0,Vector2::new(1350.0,700.0)));
     // runner.generate_square(&mut bodies, 100, 1250.0 - 100.0, 720.0 - 100.0);
     runner.resize(&mut qt,&mut bodies);
@@ -113,7 +113,7 @@ fn main() -> Result<(), Error> {
                     None => {},
                     Some(pos) => {
                         println!("{:?}",pos);
-                        bodies.push(Body::with_mass_and_pos(100.0,Vector2::new(pos.0 as f64, pos.1 as f64)));
+                        bodies.push(Body::with_mass_and_pos(1000000.0,Vector2::new(pos.0 as f64, pos.1 as f64)));
                     }
                 }
             }
@@ -138,7 +138,13 @@ fn recursively_draw_tree(canvas: &mut Canvas, qt: &Quadtree){
     for tree in &qt.subtrees{
         recursively_draw_tree(canvas,&tree);
     }
+    match qt.center_of_mass {
+        Some(center_of_mass) => {canvas.set_color(center_of_mass.x as i32, center_of_mass.y as i32, &(255,0,0,255))},
+        None => {}
+    }
+
     draw_bodies(canvas,&qt.bodies);
+
 }
 
 fn draw_bodies(canvas: &mut Canvas, bodies: &Vec<Body>){

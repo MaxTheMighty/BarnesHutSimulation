@@ -7,6 +7,7 @@ use barnes_hut::bh_runner::BarnesHutRunner;
 use barnes_hut::body::Body;
 use barnes_hut::quadtree::{Quadtree, Rectangle};
 
+
 fn main() {
     // println!("Hello, world!");
     // let vec_one: Vector2<u8> = Vector2::new(0,1);
@@ -17,6 +18,6 @@ fn main() {
     let mut bodies: Vec<Body> = Vec::new();
     let mut runner: BarnesHutRunner = BarnesHutRunner::from_theta(0.5f64);
     runner.create_tree(&mut qt, &bodies);
-    runner.generate_square(&mut bodies, 200, 100.0f64);
+    //runner.generate_square(&mut bodies, 200, 100.0f64);
     runner.iterate(&mut qt, &mut bodies);
 }
