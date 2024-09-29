@@ -58,15 +58,11 @@ fn main() -> Result<(), Error> {
     let mut bodies: Vec<Body> = Vec::new();
     let mut runner: BarnesHutRunner = BarnesHutRunner::from_theta(0.5f64);
     runner.generate_circle(&mut bodies,450.0,500.0,30.0);
-    // runner.generate_circle(&mut bodies,0.0,0.0,1000.0);
     runner.generate_circle(&mut bodies,550.0,500.0,30.0);
-    // bodies.push(Body::with_mass_and_pos(10000000.0,Vector2::new(1350.0,700.0)));
-    // runner.generate_square(&mut bodies, 100, 1250.0 - 100.0, 720.0 - 100.0);
     runner.resize(&mut qt,&mut bodies);
     runner.create_tree(&mut qt,&mut bodies);
     runner.toggle_pause();
     println!("{:?}",bodies.len());
-    // return Ok(());
     event_loop.run(move |event, _, control_flow| {
         // Draw the current frame
         if let Event::RedrawRequested(_) = event {
@@ -77,11 +73,6 @@ fn main() -> Result<(), Error> {
                 true => {recursively_draw_tree(&mut canvas, &qt);},
                 false => {recursively_draw_tree_no_box(&mut canvas, &qt);}
             }
-            // canvas.draw_square_safe(qt.boundaries.tl.x.round() as usize, qt.boundaries.tl.y.round() as usize, qt.boundaries.width() as usize, qt.boundaries.height() as usize,&(255,255,255,255));
-            // canvas.draw_square_safe(st.boundaries.tl.x.round() as usize, st.boundaries.tl.y.round() as usize, st.boundaries.width() as usize, st.boundaries.height() as usize,&(255,255,255,255));
-            // for st in &qt.subtrees{
-            //     canvas.draw_square_safe(st.boundaries.tl.x.round() as usize, st.boundaries.tl.y.round() as usize, st.boundaries.width() as usize, st.boundaries.height() as usize,&(255,255,255,255));
-            // }
             draw(pixels.frame_mut(), &mut canvas);
             canvas.clear();
             if let Err(err) = pixels.render() {
@@ -132,8 +123,6 @@ fn recursively_draw_tree_no_box(canvas: &mut Canvas, qt: &Quadtree){
     draw_bodies(canvas,&qt.bodies);
 }
 fn recursively_draw_tree(canvas: &mut Canvas, qt: &Quadtree){
-
-    // draw_square(buffer, &qt.boundaries);
     canvas.draw_square_safe(qt.boundaries.tl.x.round() as i32, qt.boundaries.tl.y.round() as i32, qt.boundaries.width() as i32, qt.boundaries.height() as i32,&(255,255,255,255));
     for tree in &qt.subtrees{
         recursively_draw_tree(canvas,&tree);

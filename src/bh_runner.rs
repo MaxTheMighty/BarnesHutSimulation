@@ -3,6 +3,8 @@ use std::ops::{Deref, DerefMut};
 use crate::quadtree::{Quadtree, Rectangle};
 use crate::gravity;
 use cgmath::{MetricSpace, Vector2};
+use rayon::prelude::IntoParallelRefMutIterator;
+use rayon::iter::ParallelIterator;
 use crate::body::Body;
 pub struct BarnesHutRunner {
 
@@ -42,10 +44,6 @@ impl BarnesHutRunner{
 
         for ring in 1..radius as u16{
             for i in 0..360{
-                /*
-                    x1 = r * cos(angle * PI / 180);
-                    y1 = r * sin(angle * PI / 180);
-                 */
                 x_pos = (radius-ring as f64 * f64::cos(i as f64 * std::f64::consts::PI / 180.0)) + x_center;
                 y_pos = (radius-ring as f64 * f64::sin(i as f64 * std::f64::consts::PI / 180.0)) + y_center;
                 bodies.push(Body::with_mass_and_pos(1.0,Vector2::new(x_pos,y_pos)));
@@ -57,15 +55,19 @@ impl BarnesHutRunner{
 
     pub fn barnes_hut_force(&mut self, quadtree: &mut Quadtree, body: &mut Body){
         if quadtree.subtrees.is_empty() {
-            //just sum forces from bodies in subtree
+            // just sum forces from bodies in subtree
             for other_body in quadtree.bodies.iter_mut(){
                 //ignore self
                 if body.pos == other_body.pos {
                     continue;
                 }
-                gravity::calculate_force_single(body,other_body);
             }
-            return;
+            // quadtree.bodies.par_iter_mut().for_each(|other_body|{
+            //     if body.pos != other_body.pos {
+            //         gravity::calculate_force_single(body,other_body);
+            //     }
+            // })
+
         }
 
         //at this point the node is not external, because it has subtrees
@@ -103,6 +105,9 @@ impl BarnesHutRunner{
         //I need to check if creating a new quadtree this way safely disposes of the old one
         //Does this mean the reference only exists for the lifetime of this function?
         // quadtree = &Quadtree::new(quadtree.boundaries, quadtree.limit); //Works because of the Clone trait (￣▽￣)"
+
+
+
         for body in bodies{
             quadtree.insert(body.clone()); //I think clone here makes a new body
         }

@@ -173,6 +173,7 @@ dependencies = [
  "fastrand",
  "log",
  "pixels",
+ "rayon",
  "tokio",
  "winit",
  "winit_input_helper",

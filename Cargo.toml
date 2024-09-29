@@ -16,6 +16,7 @@ winit_input_helper = "0.14"
 tokio = "1.37.0"
 fastrand = "2.1.0"
 deepsize = "0.2.0"
+rayon = "1.10"
 
 [dev-dependencies]
 criterion = { version = "0.4", features = ["html_reports"] }

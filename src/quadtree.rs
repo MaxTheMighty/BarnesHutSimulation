@@ -57,16 +57,10 @@ impl Rectangle{
 
     pub fn subranges(&self) -> (Rectangle,Rectangle,Rectangle,Rectangle) {
         let midpoint: Vector2<f64> = self.midpoint();
-        let x_diff_hf: f64 = midpoint.x - self.tl.x;
-        let y_diff_hf: f64 = midpoint.y - self.tl.y;
         let subrect_b_tl = Vector2::new(midpoint.x,self.tl.y);
         let subrect_b_br = Vector2::new(self.br.x,midpoint.y);
         let subrect_c_tl = Vector2::new(self.tl.x,midpoint.y);
         let subrect_c_br = Vector2::new(midpoint.x,self.br.y);
-
-        // let subrect_b_br = Vector2::new(midpoint.x+x_diff_hf,midpoint.y);
-        // let subrect_c_tl = Vector2::new(midpoint.x-x_diff_hf,midpoint.y);
-
 
         let subrect_a = Rectangle::new(self.tl,midpoint);
         let subrect_b = Rectangle::new(subrect_b_tl,subrect_b_br);
