@@ -178,15 +178,27 @@ impl Quadtree {
         self.total_mass = 0.0f64;
         //then update the center of mass
         for body in &self.bodies{
+            /*
+            Formally, if two bodies have positions (x1 , y1) and (x2, y2), and masses m1 and m2, then their total mass and center of mass (x, y) are given by:
+            m = m1 + m2
+            x = (x1m1 + x2m2) / m
+            y = (y1m1 + y2m2) / m
+             */
 
-            //why does this have to be as_mut() ???
-            self.center_of_mass.as_mut().unwrap().x+=body.pos.x;
-            self.center_of_mass.as_mut().unwrap().y+=body.pos.y;
+            // self.center_of_mass.as_mut().unwrap().x= ((body.pos.x*body.mass) + (self.center_of_mass.unwrap().x * self.total_mass))/self.total_mass;
+            // self.center_of_mass.as_mut().unwrap().y= ((body.pos.y*body.mass) + (self.center_of_mass.unwrap().y * self.total_mass))/self.total_mass;
+            // self.total_mass+=body.mass;
+            // self.
+
+            //is this valid?
+            self.center_of_mass = Some(self.center_between_two_points(self.center_of_mass.unwrap(), self.total_mass, body.pos, body.mass));
             self.total_mass+=body.mass;
 
         }
-        self.center_of_mass.as_mut().unwrap().x/=self.total_mass;
-        self.center_of_mass.as_mut().unwrap().y/=self.total_mass;
+
+        //TODO: FIX!!!!!!
+        // self.center_of_mass.as_mut().unwrap().x/=self.total_mass;
+        // self.center_of_mass.as_mut().unwrap().y/=self.total_mass;
 
     }
 
@@ -200,9 +212,15 @@ impl Quadtree {
             match subtree.center_of_mass {
                 Some(center) => {
                     non_empty_count+=1;
-                    self.total_mass += subtree.total_mass;
-                    self.center_of_mass.as_mut().unwrap().x += center.x * subtree.total_mass;
-                    self.center_of_mass.as_mut().unwrap().y += center.y * subtree.total_mass;
+                    // self.total_mass += subtree.total_mass;
+                    // self.center_of_mass.as_mut().unwrap().x = (center.x * subtree.total_mass);
+                    // self.center_of_mass.as_mut().unwrap().y = (center.y * subtree.total_mass);
+                    // self.center_of_mass.as_mut().unwrap().x = (center.x * subtree.total_mass) + (self.center_of_mass.unwrap().x * self.total_mass);
+
+                    //is this valid?
+                    self.center_of_mass = Some(self.center_between_two_points(self.center_of_mass.unwrap(),self.total_mass,center,subtree.total_mass));
+                    self.total_mass+=subtree.total_mass;
+
                 },
                 None => {
                     continue;
@@ -210,14 +228,21 @@ impl Quadtree {
             }
         }
         // self.center_of_mass.as_mut().unwrap().div_assign(non_empty_count);
-        if non_empty_count > 0{
-            self.center_of_mass.as_mut().unwrap().x /= self.total_mass;
-            self.center_of_mass.as_mut().unwrap().y /= self.total_mass;
-        }
+        // if non_empty_count > 0{
+        //     self.center_of_mass.as_mut().unwrap().x /= self.total_mass;
+        //     self.center_of_mass.as_mut().unwrap().y /= self.total_mass;
+        // }
 
     }
 
+    pub fn center_between_two_points(&self, pos_a: Vector2<f64>, mass_a: f64, pos_b: Vector2<f64>, mass_b: f64) -> Vector2<f64>{
+        let sum_mass: f64 = mass_a + mass_b;
+        let center: Vector2<f64> = ((pos_a * mass_a) + (pos_b * mass_b))/sum_mass;
+        // print!("{:?}",center);
 
+        return center;
+
+    }
 
     pub fn subtree_index(&self, pos: Vector2<f64>) -> Option<usize>{
         if self.subtrees.len() == 0 {
