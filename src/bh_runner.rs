@@ -52,7 +52,7 @@ impl BarnesHutRunner{
         }
     }
 
-    pub fn bivariate_random_dist(&mut self, bodies: &mut Vec<Body>, width: f64, height: f64, body_count: i32, body_mass: f64, center: f64){
+    pub fn generate_bivariate_random_dist(&mut self, bodies: &mut Vec<Body>, width: f64, height: f64, body_count: i32, body_mass: f64, center: f64){
         let mut rng = thread_rng();
         let x_dist = Normal::new(width / 2.0, width / 6.0).unwrap();
         let y_dist = Normal::new(height / 2.0, height / 6.0).unwrap();

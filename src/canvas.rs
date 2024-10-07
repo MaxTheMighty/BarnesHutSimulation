@@ -5,7 +5,7 @@ pub struct Canvas{
     pub width: u32,
     pub height: u32,
     pub buffer: Vec<(u8,u8,u8,u8)>,
-    pub huemap: Vec<(u8,f32,f32)>,
+    pub huemap: Vec<(f64,f64,f64)>,
     pub length: u32,
     pub default: (u8,u8,u8,u8)
 }
@@ -18,7 +18,7 @@ impl Canvas{
             length: width * height,
             default,
             buffer: vec![default; ((width * height) + width) as usize],
-            huemap: vec![(0,1.0,1.0); ((width * height) + width) as usize]
+            huemap: vec![(0.0,0.0,0.0); ((width * height) + width) as usize]
         }
     }
 
@@ -60,24 +60,64 @@ impl Canvas{
     }
 
     /// Returns a reference to the hue from the huemap at a given index
-    pub fn get_hue(&self, x_pos: i32, y_pos: i32) -> &(u8,f32,f32){
+    pub fn get_hue(&self, x_pos: i32, y_pos: i32) -> &(f64,f64,f64){
         let index: usize = self.get_index(x_pos,y_pos);
         return &self.huemap[index];
     }
 
     /// Returns a mutable reference to the hue from the huemap at a given index
-    pub fn get_hue_mut(&self, x_pos: i32, y_pos: i32) -> &mut (u8,f32,f32){
+    pub fn get_hue_mut(&mut self, x_pos: i32, y_pos: i32) -> &mut (f64,f64,f64){
         let index: usize = self.get_index(x_pos,y_pos);
         return &mut self.huemap[index];
     }
 
+    /// Sets the hue at the given x and y position
+    ///
+    /// This function does not do any checking for bounds, to check for bounds, use `set_hue_safe`
+    pub fn set_hue(&mut self, x_pos: i32, y_pos: i32, hue: f64, saturation: f64, value: f64){
+        let index: usize = self.get_index(x_pos,y_pos);
+        self.huemap[index].0 = hue;
+        self.huemap[index].1 = saturation;
+        self.huemap[index].2 = value;
+    }
+
+    //TODO
+    pub fn set_hue_safe(&mut self, x_pos: i32, y_pos: i32, hue: f32){
+
+    }
+
     /// Copy the values from the huemap to the canvas
-    pub fn copy_huemap_to_canvas(&self){
-        for index in self.length+self.width{
-            // do some operations here
-            let rgb_value = (hsv_to_rgb(self.huemap[index].0,self.huemap[index].1,self.huemap[index].2),255);
-            self.buffer[index] = rgb_value;
+    pub fn copy_huemap_to_canvas(&mut self){
+        for (huemap_pixel, canvas_pixel) in self.huemap.iter().zip(self.buffer.iter_mut()){
+            let (h,s,v) = *huemap_pixel;
+            let rgb_value = hsv_to_rgb(h,s,v);
+            canvas_pixel.0 = rgb_value.0;
+            canvas_pixel.1 = rgb_value.1;
+            canvas_pixel.2 = rgb_value.2;
+            canvas_pixel.3 = 255;
+
         }
+    }
+
+    /// Increments the huemap at a given point, clamping it to 0-360
+    pub fn increment_huemap(&mut self, x_pos: i32, y_pos: i32, increment: f64){
+        if(!self.pos_valid(x_pos,y_pos)){
+            return;
+        }
+
+        let index: usize = self.get_index(x_pos,y_pos);
+
+        if self.huemap[index].0 == 0.0 {
+            self.huemap[index].0 = 0.0;
+            self.huemap[index].1 = 1.0;
+            self.huemap[index].2 = 1.0;
+        }
+        self.huemap[index].0 += increment;
+
+        if self.huemap[index].0 > 360.0 {
+            self.huemap[index].0 = 360.0;
+        }
+
     }
 
 
@@ -145,6 +185,7 @@ impl Canvas{
 
     pub fn clear(&mut self){
         self.buffer.fill((0,0,0,0));
+        self.huemap.fill((0.0,0.0,0.0));
     }
 }
 

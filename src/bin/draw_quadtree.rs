@@ -1,10 +1,7 @@
 #![allow(warnings)]
 
 use std::env;
-use std::ops::{Deref, DerefMut};
-use cgmath::num_traits::Saturating;
 use cgmath::Vector2;
-use hsv::hsv_to_rgb;
 use pixels::{Error, Pixels, SurfaceTexture};
 use winit::dpi::LogicalSize;
 use winit::event::{Event, VirtualKeyCode};
@@ -58,8 +55,9 @@ fn main() -> Result<(), Error> {
     let mut qt: Quadtree = Quadtree::new(rec,1);
     let mut bodies: Vec<Body> = Vec::new();
     let mut runner: BarnesHutRunner = BarnesHutRunner::from_theta(1.0f64);
-    runner.bivariate_random_dist(&mut bodies,WIDTH_F/2.0,HEIGHT_F/2.0,40000,10.0, WIDTH_F/4.0);
-    bodies.push(Body::with_mass_and_pos(10000.0,Vector2::new(WIDTH_F,HEIGHT_F)));
+    // runner.generate_bivariate_random_dist(&mut bodies, WIDTH_F/2.0, HEIGHT_F/2.0, 40000, 10.0, WIDTH_F/4.0);
+    runner.generate_circle(&mut bodies, 450.0,450.0,50.0);
+    // bodies.push(Body::with_mass_and_pos(100000.0,Vector2::new(WIDTH_F,HEIGHT_F)));
     runner.resize(&mut qt,&mut bodies);
     runner.create_tree(&mut qt,&mut bodies);
     runner.toggle_pause();
@@ -67,6 +65,7 @@ fn main() -> Result<(), Error> {
     event_loop.run(move |event, _, control_flow| {
         // Draw the current frame
         if let Event::RedrawRequested(_) = event {
+
             runner.iterate(&mut qt, &mut bodies);
             if(DEBUG) {runner.print_bodies(&qt);}
 
@@ -74,6 +73,7 @@ fn main() -> Result<(), Error> {
                 true => {recursively_draw_tree(&mut canvas, &qt);},
                 false => {recursively_draw_tree_no_box(&mut canvas, &qt);}
             }
+            canvas.copy_huemap_to_canvas();
             draw(pixels.frame_mut(), &mut canvas);
             canvas.clear();
             if let Err(err) = pixels.render() {
@@ -131,7 +131,8 @@ fn recursively_draw_tree(canvas: &mut Canvas, qt: &Quadtree){
     match qt.center_of_mass {
         Some(center_of_mass) => {
             if(canvas.pos_valid(center_of_mass.x as i32, center_of_mass.y as i32)){
-                canvas.set_color(center_of_mass.x as i32, center_of_mass.y as i32, &(255,0,0,255))
+                // canvas.set_color(center_of_mass.x as i32, center_of_mass.y as i32, &(255,0,0,255))
+                // canvas.set_hue(center_of_mass.x as i32, center_of_mass.y as i32, 1.0,1.0,1.0);
             } else {
                 //
             }
@@ -149,7 +150,6 @@ fn draw_bodies(canvas: &mut Canvas, bodies: &Vec<Body>){
         true => {}
         false => {
             for body in bodies{
-                // let point_pos = calculate_buffer_pos(&body.pos);
                 update_pixel_heat(canvas, body); //not a fan of this casting
             }
         }
@@ -159,14 +159,12 @@ fn draw_bodies(canvas: &mut Canvas, bodies: &Vec<Body>){
 fn update_pixel_heat(canvas: &mut Canvas, body: &Body){
     let x_pos: i32 = body.pos.x.round() as i32;
     let y_pos: i32 = body.pos.y.round() as i32;
+
     if(!canvas.pos_valid(x_pos,y_pos)){
         return;
     }
 
-    if(canvas.is_default(x_pos,y_pos)) {
-        canvas.set_color(x_pos,y_pos, &(0,0,0,255));
-        return;
-    }
+    canvas.increment_huemap(body.pos.x as i32, body.pos.y as i32, 5.0);
 
 
 

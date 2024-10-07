@@ -42,6 +42,11 @@ fn main()  -> Result<(), Error> {
     event_loop.run(move |event, _, control_flow| {
 
         // canvas.set_color(0,1000,&(255,0,0,255));
+        for i in 0..360{
+            canvas.set_hue(i, 0, i as f64, 1.0, 1.0);
+        }
+        canvas.copy_huemap_to_canvas();
+
         // canvas.draw_square(5,3,3,&(255,255,255,255));
         // canvas.draw_square(0,0,500,&(255,255,255,255));
         // canvas.draw_square(500,0,500,&(255,255,255,255));
