@@ -24,6 +24,9 @@ hsv = "0.1.1"
 [dev-dependencies]
 criterion = { version = "0.4", features = ["html_reports"] }
 
+[profile.release]
+debug = true
+
 [[bench]]
-name = "benchmark"
+name = "benchmark_drawing"
 harness = false

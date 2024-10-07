@@ -1,7 +1,7 @@
-#![allow(warnings)]
 
 use std::env;
 use cgmath::Vector2;
+use criterion::{criterion_group, criterion_main, Criterion};
 use pixels::{Error, Pixels, SurfaceTexture};
 use winit::dpi::LogicalSize;
 use winit::event::{Event, VirtualKeyCode};
@@ -21,10 +21,7 @@ const HEIGHT: u32 = 1000;
 const HEIGHT_F: f64 = HEIGHT as f64;
 
 const LIMIT: u32 = ((WIDTH + 1)) * ((HEIGHT + 1) );
-
-
-
-fn main() -> Result<(), Error> {
+fn criterion_benchmark(c: &mut Criterion) {
     env::set_var("RUST_BACKTRACE", "FULL");
     //pre update
     env_logger::init();
@@ -46,8 +43,8 @@ fn main() -> Result<(), Error> {
     let mut pixels = {
         let window_size = window.inner_size();
         let surface_texture = SurfaceTexture::new(window_size.width, window_size.height, &window);
-        Pixels::new(WIDTH, HEIGHT, surface_texture)?
-    };
+        Pixels::new(WIDTH, HEIGHT, surface_texture)
+    }.unwrap();
 
     //TODO: change quadtree vec to smallvec or just an array
 
@@ -63,58 +60,20 @@ fn main() -> Result<(), Error> {
     runner.create_tree(&mut qt,&mut bodies);
     // runner.toggle_pause();
     println!("{:?}",bodies.len());
-    event_loop.run(move |event, _, control_flow| {
-        // Draw the current frame
-        if let Event::RedrawRequested(_) = event {
-
+    c.bench_function("draw 100", |b| {
+        b.iter(|| {
             runner.iterate(&mut qt, &mut bodies);
-            if(DEBUG) {runner.print_bodies(&qt);}
 
-            match(draw_boxes){
-                true => {recursively_draw_tree(&mut canvas, &qt);},
-                false => {recursively_draw_tree_no_box(&mut canvas, &qt);}
+            match (draw_boxes) {
+                true => { recursively_draw_tree(&mut canvas, &qt); },
+                false => { recursively_draw_tree_no_box(&mut canvas, &qt); }
             }
             canvas.copy_huemap_to_buffer(pixels.frame_mut());
             canvas.clear();
-            if let Err(err) = pixels.render() {
-                *control_flow = ControlFlow::Exit;
-                return;
-            }
-        }
 
-        // Handle input events
-        if input.update(&event) {
-            // Close events
-            // if input.key_pressed(VirtualKeyCode::Escape) || input.close_requested() {
-            //     *control_flow = ControlFlow::Exit;
-            //     return;
-            // }
-            //
-            // if input.key_pressed(VirtualKeyCode::Space){
-            //     draw_boxes = !draw_boxes;
-            //     println!("draw boxes set to {draw_boxes}");
-            // }
-            //
-            // if input.key_pressed(VirtualKeyCode::P){
-            //     runner.toggle_pause();
-            //     println!("pause set to {:?}",runner.paused);
-            // }
-            //
-            // if input.mouse_pressed(0){
-            //     match(input.mouse()){
-            //         None => {},
-            //         Some(pos) => {
-            //             println!("{:?}",pos);
-            //             bodies.push(Body::with_mass_and_pos(10000.0,Vector2::new(pos.0 as f64, pos.1 as f64)));
-            //         }
-            //     }
-            // }
-            window.request_redraw();
-        }
+        });
 
-
-    });
-
+    } );
 }
 
 fn recursively_draw_tree_no_box(canvas: &mut Canvas, qt: &Quadtree){
@@ -128,18 +87,6 @@ fn recursively_draw_tree(canvas: &mut Canvas, qt: &Quadtree){
     for tree in &qt.subtrees{
         recursively_draw_tree(canvas,&tree);
     }
-    // match qt.center_of_mass {
-    //     Some(center_of_mass) => {
-    //         if(canvas.pos_valid(center_of_mass.x as i32, center_of_mass.y as i32)){
-    //             // canvas.set_color(center_of_mass.x as i32, center_of_mass.y as i32, &(255,0,0,255))
-    //             // canvas.set_hue(center_of_mass.x as i32, center_of_mass.y as i32, 1.0,1.0,1.0);
-    //         } else {
-    //             //
-    //         }
-    //
-    //     },
-    //     None => {}
-    // }
 
     draw_bodies(canvas,&qt.bodies);
 
@@ -168,3 +115,7 @@ fn update_pixel_heat(canvas: &mut Canvas, body: &Body){
 }
 
 
+
+
+criterion_group!(benches, criterion_benchmark);
+criterion_main!(benches);
