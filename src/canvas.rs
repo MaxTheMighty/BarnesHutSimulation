@@ -1,9 +1,11 @@
 use cgmath::num_traits::{Saturating, SaturatingAdd};
+use hsv::hsv_to_rgb;
 
 pub struct Canvas{
     pub width: u32,
     pub height: u32,
     pub buffer: Vec<(u8,u8,u8,u8)>,
+    pub huemap: Vec<(u8,f32,f32)>,
     pub length: u32,
     pub default: (u8,u8,u8,u8)
 }
@@ -16,6 +18,7 @@ impl Canvas{
             length: width * height,
             default,
             buffer: vec![default; ((width * height) + width) as usize],
+            huemap: vec![(0,1.0,1.0); ((width * height) + width) as usize]
         }
     }
 
@@ -54,6 +57,27 @@ impl Canvas{
     pub fn get_color_mut(&mut self, x_pos: i32, y_pos: i32) -> &mut (u8,u8,u8,u8){
         let index: usize = self.get_index(x_pos,y_pos);
         return &mut self.buffer[index]; //will this work?
+    }
+
+    /// Returns a reference to the hue from the huemap at a given index
+    pub fn get_hue(&self, x_pos: i32, y_pos: i32) -> &(u8,f32,f32){
+        let index: usize = self.get_index(x_pos,y_pos);
+        return &self.huemap[index];
+    }
+
+    /// Returns a mutable reference to the hue from the huemap at a given index
+    pub fn get_hue_mut(&self, x_pos: i32, y_pos: i32) -> &mut (u8,f32,f32){
+        let index: usize = self.get_index(x_pos,y_pos);
+        return &mut self.huemap[index];
+    }
+
+    /// Copy the values from the huemap to the canvas
+    pub fn copy_huemap_to_canvas(&self){
+        for index in self.length+self.width{
+            // do some operations here
+            let rgb_value = (hsv_to_rgb(self.huemap[index].0,self.huemap[index].1,self.huemap[index].2),255);
+            self.buffer[index] = rgb_value;
+        }
     }
 
 

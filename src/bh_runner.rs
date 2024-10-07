@@ -6,8 +6,9 @@ use cgmath::{MetricSpace, Vector2};
 use rayon::prelude::IntoParallelRefMutIterator;
 use rayon::iter::ParallelIterator;
 use crate::body::Body;
+use rand::prelude::*;
+use rand_distr::{Distribution, Normal, StandardNormal};
 pub struct BarnesHutRunner {
-
     pub theta: f64,
     pub paused: bool
 }
@@ -38,18 +39,29 @@ impl BarnesHutRunner{
         }
     }
 
-    pub fn generate_circle(&mut self, bodies: &mut Vec<Body>, x_center: f64, y_center: f64, radius: f64){
+    pub fn generate_circle(&mut self, bodies: &mut Vec<Body>, x_center: f64, y_center: f64, radius: f64) {
         let mut x_pos: f64 = 0.0;
         let mut y_pos: f64 = 0.0;
 
-        for ring in 1..radius as u16{
-            for i in 0..360{
-                x_pos = (radius-ring as f64 * f64::cos(i as f64 * std::f64::consts::PI / 180.0)) + x_center;
-                y_pos = (radius-ring as f64 * f64::sin(i as f64 * std::f64::consts::PI / 180.0)) + y_center;
-                bodies.push(Body::with_mass_and_pos(1.0,Vector2::new(x_pos,y_pos)));
+        for ring in 1..radius as u16 {
+            for i in 0..360 {
+                x_pos = (radius - ring as f64 * f64::cos(i as f64 * std::f64::consts::PI / 180.0)) + x_center;
+                y_pos = (radius - ring as f64 * f64::sin(i as f64 * std::f64::consts::PI / 180.0)) + y_center;
+                bodies.push(Body::with_mass_and_pos(1.0, Vector2::new(x_pos, y_pos)));
             }
         }
+    }
 
+    pub fn bivariate_random_dist(&mut self, bodies: &mut Vec<Body>, width: f64, height: f64, body_count: i32, body_mass: f64, center: f64){
+        let mut rng = thread_rng();
+        let x_dist = Normal::new(width / 2.0, width / 6.0).unwrap();
+        let y_dist = Normal::new(height / 2.0, height / 6.0).unwrap();
+        for _ in 0..body_count {
+            let x = x_dist.sample(&mut rng) + center.clamp(0.0, width);
+            let y = y_dist.sample(&mut rng) + center.clamp(0.0, height);
+
+            bodies.push(Body::with_mass_and_pos(body_mass,Vector2::new(x,y)));
+        }
     }
 
 

@@ -4,6 +4,7 @@ use std::env;
 use std::ops::{Deref, DerefMut};
 use cgmath::num_traits::Saturating;
 use cgmath::Vector2;
+use hsv::hsv_to_rgb;
 use pixels::{Error, Pixels, SurfaceTexture};
 use winit::dpi::LogicalSize;
 use winit::event::{Event, VirtualKeyCode};
@@ -57,10 +58,8 @@ fn main() -> Result<(), Error> {
     let mut qt: Quadtree = Quadtree::new(rec,1);
     let mut bodies: Vec<Body> = Vec::new();
     let mut runner: BarnesHutRunner = BarnesHutRunner::from_theta(1.0f64);
-    // runner.generate_circle(&mut bodies,400.0,500.0,30.0);
-    runner.generate_circle(&mut bodies,500.0,500.0,50.0);
-    runner.generate_square(&mut bodies, 50,450.0,450.0);
-    // runner.generate_circle(&mut bodies,600.0,500.0,30.0);
+    runner.bivariate_random_dist(&mut bodies,WIDTH_F/2.0,HEIGHT_F/2.0,40000,10.0, WIDTH_F/4.0);
+    bodies.push(Body::with_mass_and_pos(10000.0,Vector2::new(WIDTH_F,HEIGHT_F)));
     runner.resize(&mut qt,&mut bodies);
     runner.create_tree(&mut qt,&mut bodies);
     runner.toggle_pause();
@@ -151,29 +150,43 @@ fn draw_bodies(canvas: &mut Canvas, bodies: &Vec<Body>){
         false => {
             for body in bodies{
                 // let point_pos = calculate_buffer_pos(&body.pos);
-                update_pixel_heat(canvas, body.pos.x.round() as i32, body.pos.y.round() as i32); //not a fan of this casting
+                update_pixel_heat(canvas, body); //not a fan of this casting
             }
         }
     }
 }
 
-fn update_pixel_heat(canvas: &mut Canvas, x_pos: i32, y_pos: i32){
-
+fn update_pixel_heat(canvas: &mut Canvas, body: &Body){
+    let x_pos: i32 = body.pos.x.round() as i32;
+    let y_pos: i32 = body.pos.y.round() as i32;
     if(!canvas.pos_valid(x_pos,y_pos)){
         return;
     }
-    if(canvas.is_default(x_pos,y_pos)){
-        canvas.set_color(x_pos,y_pos,&(0,0,255,60));
-    } else {
-        let color_ref = canvas.get_color_mut(x_pos,y_pos);
-        (*color_ref).3 = (*color_ref).3.saturating_add(10);
-        (*color_ref).1 = (*color_ref).1.saturating_add(10);
-        if((*color_ref).1 == 255){
-            (*color_ref).0 = (*color_ref).0.saturating_add(10);
-        }
-        // *color_ref.2.saturating_sub()
 
+    if(canvas.is_default(x_pos,y_pos)) {
+        canvas.set_color(x_pos,y_pos, &(0,0,0,255));
+        return;
     }
+
+
+
+    // let hue_value: f64 = body.mass.clamp(0.0, 360.0);
+    // let rgb: (u8,u8,u8) = hsv_to_rgb(hue_value,1.0,1.0);
+    // canvas.set_color(x_pos,y_pos,&(rgb.0,rgb.1,rgb.2,255));
+
+    //get
+
+    // if(canvas.is_default(x_pos,y_pos)){
+    //     canvas.set_color(x_pos,y_pos,&(0,0,255,60));
+    // } else {
+    //     let color_ref = canvas.get_color_mut(x_pos,y_pos);
+    //     (*color_ref).3 = (*color_ref).3.saturating_add(10);
+    //     (*color_ref).1 = (*color_ref).1.saturating_add(10);
+    //     if((*color_ref).1 == 255){
+    //         (*color_ref).0 = (*color_ref).0.saturating_add(10);
+    //     }
+    //     // *color_ref.2.saturating_sub()
+    // }
 }
 
 fn draw_square(buffer: &mut Vec<(u8,u8,u8,u8)>, rec: &Rectangle){
@@ -202,6 +215,7 @@ fn draw_square(buffer: &mut Vec<(u8,u8,u8,u8)>, rec: &Rectangle){
     }
 
 }
+
 
 
 fn within_buffer(pos: &Vector2<f64>) -> bool {
