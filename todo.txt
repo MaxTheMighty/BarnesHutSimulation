@@ -10,4 +10,5 @@ Quadtree:
 Overall:
 - Run the algorithm on the GPU (will require massive rewrite)
 - Integrate egui support
+- Use a text file for starting values
 
