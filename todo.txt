@@ -1,0 +1,13 @@
+Canvas:
+- Create color function
+- Revert functions to RGB map
+- Iterate over RGB spectrum without using HSV
+
+Quadtree:
+- Change to store index for body list, instead of having duplicates
+- Change from Vec to Array for subtrees
+
+Overall:
+- Run the algorithm on the GPU (will require massive rewrite)
+- Integrate egui support
+

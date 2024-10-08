@@ -1,5 +1,6 @@
 use cgmath::num_traits::{Saturating, SaturatingAdd};
 use hsv::hsv_to_rgb;
+use rayon::prelude::*;
 
 pub struct Canvas{
     pub width: u32,
@@ -92,7 +93,7 @@ impl Canvas{
 
     /// Copy the values from the huemap to the given buffer
     pub fn copy_huemap_to_buffer(&mut self, buffer: &mut [u8]){
-        for (huemap_pixel, canvas_pixel) in self.huemap.iter().zip(buffer.chunks_mut(4)) {
+        for (huemap_pixel, canvas_pixel) in self.huemap.iter().zip(buffer.chunks_mut(4)){
             let (h,s,v) = *huemap_pixel;
             let rgb_value = hsv_to_rgb(h,s,v);
             canvas_pixel[0] = rgb_value.0;

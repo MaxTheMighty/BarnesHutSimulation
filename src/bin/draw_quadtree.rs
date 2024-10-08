@@ -55,13 +55,15 @@ fn main() -> Result<(), Error> {
     let mut qt: Quadtree = Quadtree::new(rec,1);
     let mut bodies: Vec<Body> = Vec::new();
     let mut runner: BarnesHutRunner = BarnesHutRunner::from_theta(1.0f64);
-    // runner.generate_bivariate_random_dist(&mut bodies, WIDTH_F/2.0, HEIGHT_F/2.0, 40000, 10.0, WIDTH_F/4.0);
+    // runner.generate_bivariate_random_dist(&mut bodies, WIDTH_F, HEIGHT_F, 60000, 10.0, WIDTH_F/16.0);
+    runner.generate_bivariate_random_dist(&mut bodies, WIDTH_F, HEIGHT_F, 100000, 10.0, 0.2);
+
     // runner.generate_circle(&mut bodies, 450.0,450.0,50.0);
-    // bodies.push(Body::with_mass_and_pos(100000.0,Vector2::new(WIDTH_F,HEIGHT_F)));
-    runner.generate_square(&mut bodies, 100, 450.0, 450.0);
+    // bodies.push(Body::with_mass_and_pos(1000.0,Vector2::new(WIDTH_F/2.0,HEIGHT_F/2.0)));
+    // runner.generate_square(&mut bodies, 100, 450.0, 450.0);
     runner.resize(&mut qt,&mut bodies);
     runner.create_tree(&mut qt,&mut bodies);
-    // runner.toggle_pause();
+    runner.paused = true;
     println!("{:?}",bodies.len());
     event_loop.run(move |event, _, control_flow| {
         // Draw the current frame
@@ -85,30 +87,30 @@ fn main() -> Result<(), Error> {
         // Handle input events
         if input.update(&event) {
             // Close events
-            // if input.key_pressed(VirtualKeyCode::Escape) || input.close_requested() {
-            //     *control_flow = ControlFlow::Exit;
-            //     return;
-            // }
-            //
-            // if input.key_pressed(VirtualKeyCode::Space){
-            //     draw_boxes = !draw_boxes;
-            //     println!("draw boxes set to {draw_boxes}");
-            // }
-            //
-            // if input.key_pressed(VirtualKeyCode::P){
-            //     runner.toggle_pause();
-            //     println!("pause set to {:?}",runner.paused);
-            // }
-            //
-            // if input.mouse_pressed(0){
-            //     match(input.mouse()){
-            //         None => {},
-            //         Some(pos) => {
-            //             println!("{:?}",pos);
-            //             bodies.push(Body::with_mass_and_pos(10000.0,Vector2::new(pos.0 as f64, pos.1 as f64)));
-            //         }
-            //     }
-            // }
+            if input.key_pressed(VirtualKeyCode::Escape) || input.close_requested() {
+                *control_flow = ControlFlow::Exit;
+                return;
+            }
+
+            if input.key_pressed(VirtualKeyCode::Space){
+                draw_boxes = !draw_boxes;
+                println!("draw boxes set to {draw_boxes}");
+            }
+
+            if input.key_pressed(VirtualKeyCode::P){
+                runner.toggle_pause();
+                println!("pause set to {:?}",runner.paused);
+            }
+
+            if input.mouse_pressed(0){
+                match(input.mouse()){
+                    None => {},
+                    Some(pos) => {
+                        println!("{:?}",pos);
+                        bodies.push(Body::with_mass_and_pos(10000.0,Vector2::new(pos.0 as f64, pos.1 as f64)));
+                    }
+                }
+            }
             window.request_redraw();
         }
 

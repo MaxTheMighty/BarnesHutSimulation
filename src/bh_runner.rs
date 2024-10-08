@@ -52,15 +52,26 @@ impl BarnesHutRunner{
         }
     }
 
-    pub fn generate_bivariate_random_dist(&mut self, bodies: &mut Vec<Body>, width: f64, height: f64, body_count: i32, body_mass: f64, center: f64){
+    pub fn generate_bivariate_random_dist(&mut self, bodies: &mut Vec<Body>, width: f64, height: f64, body_count: i32, body_mass: f64, spread: f64) {
         let mut rng = thread_rng();
-        let x_dist = Normal::new(width / 2.0, width / 6.0).unwrap();
-        let y_dist = Normal::new(height / 2.0, height / 6.0).unwrap();
-        for _ in 0..body_count {
-            let x = x_dist.sample(&mut rng) + center.clamp(0.0, width);
-            let y = y_dist.sample(&mut rng) + center.clamp(0.0, height);
 
-            bodies.push(Body::with_mass_and_pos(body_mass,Vector2::new(x,y)));
+
+        // Calculate the center of the space
+        let center_x = width / 2.0;
+        let center_y = height / 2.0;
+
+        // Define the standard deviation based on the spread parameter
+        let std_dev = spread * width / 6.0;
+
+        // Create normal distributions centered at the middle of the space
+        let x_dist = Normal::new(center_x, std_dev).unwrap();
+        let y_dist = Normal::new(center_y, std_dev).unwrap();
+
+        for _ in 0..body_count {
+            let x = x_dist.sample(&mut rng).clamp(0.0, width);
+            let y = y_dist.sample(&mut rng).clamp(0.0, height);
+
+            bodies.push(Body::with_mass_and_pos(body_mass, Vector2::new(x, y)));
         }
     }
 
@@ -157,21 +168,6 @@ impl BarnesHutRunner{
             if body.pos.y < smallest{
                 smallest = body.pos.y;
             }
-            // if body.pos.x > new_boundaries.br.x{
-            //     new_boundaries.br.x = body.pos.x;
-            // }
-            //
-            // if body.pos.x < new_boundaries.tl.x {
-            //     new_boundaries.tl.x = body.pos.x;
-            // }
-            //
-            // if body.pos.y > new_boundaries.br.y{
-            //     new_boundaries.br.y = body.pos.y;
-            // }
-            //
-            // if body.pos.y < new_boundaries.tl.y{
-            //     new_boundaries.tl.y = body.pos.y;
-            // }
         }
 
         quadtree.boundaries.tl.x = smallest;
