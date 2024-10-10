@@ -2,7 +2,7 @@ use cgmath::{Vector2};
 use crate::body::Body;
 
 const G: f64 = 1.00;
-const DT: f64 = 0.01;
+const DT: f64 = 0.001;
 
 const EPSILON: f64 = 1.0;
 //const MIN: f64 = 0.0f64;

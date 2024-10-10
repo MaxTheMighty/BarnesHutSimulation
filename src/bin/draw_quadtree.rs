@@ -14,9 +14,9 @@ use barnes_hut::quadtree::{Quadtree, Rectangle};
 use barnes_hut::canvas::Canvas;
 const DEBUG: bool = false;
 
-const WIDTH: u32 = 1000;
+const WIDTH: u32 = 800;
 const WIDTH_F: f64 = WIDTH as f64;
-const HEIGHT: u32 = 1000;
+const HEIGHT: u32 = 800;
 
 const HEIGHT_F: f64 = HEIGHT as f64;
 
@@ -55,13 +55,16 @@ fn main() -> Result<(), Error> {
     let mut qt: Quadtree = Quadtree::new(rec,1);
     let mut bodies: Vec<Body> = Vec::new();
     let mut runner: BarnesHutRunner = BarnesHutRunner::from_theta(1.0f64);
-    // runner.generate_bivariate_random_dist(&mut bodies, WIDTH_F, HEIGHT_F, 60000, 10.0, WIDTH_F/16.0);
-    runner.generate_bivariate_random_dist(&mut bodies, WIDTH_F, HEIGHT_F, 100000, 10.0, 0.2);
+    // runner.generate_bivariate_random_dist(&mut bodies, WIDTH_F, HEIGHT_F, 50000, 10.0, 0.5);
 
     // runner.generate_circle(&mut bodies, 450.0,450.0,50.0);
-    // bodies.push(Body::with_mass_and_pos(1000.0,Vector2::new(WIDTH_F/2.0,HEIGHT_F/2.0)));
+    // bodies.push(Body::with_mass_and_pos(1.0,Vector2::new((WIDTH_F/2.0) - 75.0,(HEIGHT_F/2.0))));
+    // bodies.last_mut().unwrap().velocity.y = -7.0;
+    // bodies.last_mut().unwrap().velocity.x = 1.0;
+    // bodies.push(Body::with_mass_and_pos(100000.0,Vector2::new(WIDTH_F/2.0,HEIGHT_F/2.0)));
     // runner.generate_square(&mut bodies, 100, 450.0, 450.0);
     runner.resize(&mut qt,&mut bodies);
+    println!("{:?}",qt.boundaries);
     runner.create_tree(&mut qt,&mut bodies);
     runner.paused = true;
     println!("{:?}",bodies.len());

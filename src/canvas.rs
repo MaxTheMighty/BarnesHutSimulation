@@ -1,6 +1,5 @@
 use cgmath::num_traits::{Saturating, SaturatingAdd};
 use hsv::hsv_to_rgb;
-use rayon::prelude::*;
 
 pub struct Canvas{
     pub width: u32,

@@ -1,17 +1,14 @@
 use std::env;
-use cgmath::Vector2;
 use pixels::{Error, Pixels, SurfaceTexture};
 use winit::dpi::LogicalSize;
 use winit::event::{Event, VirtualKeyCode};
 use winit::event_loop::{ControlFlow, EventLoop};
 use winit::window::WindowBuilder;
 use winit_input_helper::WinitInputHelper;
-use barnes_hut::bh_runner::BarnesHutRunner;
-use barnes_hut::body::Body;
 use barnes_hut::canvas::Canvas;
-use barnes_hut::quadtree::{Quadtree, Rectangle};
+pub mod frame_renderer;
 
-fn main()  -> Result<(), Error> {
+fn main() -> Result<(), Error> {
     env::set_var("RUST_BACKTRACE", "FULL");
     //pre update
     env_logger::init();

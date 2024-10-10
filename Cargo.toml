@@ -13,19 +13,17 @@ log = "0.4"
 pixels = "0.13.0"
 winit = "0.28"
 winit_input_helper = "0.14"
-tokio = "1.37.0"
 fastrand = "2.1.0"
-deepsize = "0.2.0"
-rayon = "1.10"
 rand = "0.8.5"
 rand_distr = "0.4.3"
 hsv = "0.1.1"
+image = "0.24.7"
 
 [dev-dependencies]
 criterion = { version = "0.4", features = ["html_reports"] }
 
 [profile.release]
-debug = true
+#strip = true        # Strip symbols from binary*
 
 [[bench]]
 name = "benchmark_drawing"

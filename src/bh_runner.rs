@@ -3,8 +3,6 @@ use std::ops::{Deref, DerefMut};
 use crate::quadtree::{Quadtree, Rectangle};
 use crate::gravity;
 use cgmath::{MetricSpace, Vector2};
-use rayon::prelude::IntoParallelRefMutIterator;
-use rayon::iter::ParallelIterator;
 use crate::body::Body;
 use rand::prelude::*;
 use rand_distr::{Distribution, Normal, StandardNormal};
