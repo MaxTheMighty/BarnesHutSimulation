@@ -3,8 +3,8 @@
 
 This repository contains a [Barnes-Hut](https://en.wikipedia.org/wiki/Barnes%E2%80%93Hut_simulation) simulation written entirely in Rust.
 
-# Demo
-[![Barnes-Hut Simulation Demo](http://img.youtube.com/vi/RzriJ3lD-wg/0.jpg)](http://www.youtube.com/watch?v=RzriJ3lD-wg "Video Barnes-Hut Simulation")
+# Rendered Demo
+[![Barnes-Hut Simulation Demo](http://img.youtube.com/vi/k-Y4igthvrI/0.jpg)](https://youtu.be/k-Y4igthvrI)
 
 ## Running
 Run the following command in the project's top level directory:
