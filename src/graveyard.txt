@@ -1,0 +1,67 @@
+        // // Cube A
+        // let cube_a: [Vec3;2] = [
+        //     Vec3::new(self.left_top_back_corner.x, self.right_bottom_front_corner.y, self.center.z),
+        //     Vec3::new(self.center.x, self.center.y, self.right_bottom_front_corner.z)
+        // ];
+        //
+        // // Cube B
+        // let cube_b: [Vec3;2] = [
+        //     Vec3::new(self.center.x, self.left_top_back_corner.y, self.center.z),
+        //     Vec3::new(self.right_bottom_front_corner.x, self.center.y, self.right_bottom_front_corner.z)
+        // ];
+        //
+        // // Cube C
+        // let cube_c: [Vec3;2] = [
+        //     Vec3::new(self.left_top_back_corner.x, self.center.y, self.center.z),
+        //     Vec3::new(self.center.x, self.right_bottom_front_corner.y, self.right_bottom_front_corner.z)
+        // ];
+        //
+        // // Cube D
+        // let cube_d: [Vec3;2] = [
+        //     Vec3::new(self.center.x, self.center.y, self.center.z),
+        //     Vec3::new(self.right_bottom_front_corner.x, self.left_top_back_corner.y, self.right_bottom_front_corner.z)
+        // ];
+        //
+        // // Cube E
+        // let cube_e: [Vec3;2] = [
+        //     Vec3::new(self.left_top_back_corner.x, self.left_top_back_corner.y, self.left_top_back_corner.z),
+        //     Vec3::new(self.center.x, self.center.y, self.center.z)
+        // ];
+        //
+        // // Cube F
+        // let cube_f: [Vec3;2] = [
+        //     Vec3::new(self.center.x, self.left_top_back_corner.y, self.left_top_back_corner.z),
+        //     Vec3::new(self.right_bottom_front_corner.x, self.center.y, self.center.z)
+        // ];
+        //
+        // // Cube G
+        // let cube_g: [Vec3;2] = [
+        //     Vec3::new(self.left_top_back_corner.x, self.center.y, self.left_top_back_corner.z),
+        //     Vec3::new(self.center.x, self.right_bottom_front_corner.y, self.center.z)
+        // ];
+        //
+        // // Cube H
+        // let cube_h: [Vec3;2] = [
+        //     Vec3::new(self.center.x, self.center.y, self.left_top_back_corner.z),
+        //     Vec3::new(self.right_bottom_front_corner.x, self.right_bottom_front_corner.y, self.center.z)
+        // ];
+        //
+        // let cube_a_tree = Box::new(Octree::new(cube_a));
+        // let cube_b_tree = Box::new(Octree::new(cube_b));
+        // let cube_c_tree = Box::new(Octree::new(cube_c));
+        // let cube_d_tree = Box::new(Octree::new(cube_d));
+        // let cube_e_tree = Box::new(Octree::new(cube_e));
+        // let cube_f_tree = Box::new(Octree::new(cube_f));
+        // let cube_g_tree = Box::new(Octree::new(cube_g));
+        // let cube_h_tree = Box::new(Octree::new(cube_h));
+        //
+        // self.subregions = Some([
+        //     cube_a_tree,
+        //     cube_b_tree,
+        //     cube_c_tree,
+        //     cube_d_tree,
+        //     cube_e_tree,
+        //     cube_f_tree,
+        //     cube_g_tree,
+        //     cube_h_tree
+        // ]);
