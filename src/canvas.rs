@@ -39,7 +39,7 @@ impl Canvas{
     ///
     /// This function checks for bounds, and does not set the color if it is out of bounds
     pub fn set_color_safe(&mut self, x_pos: i32, y_pos: i32, color: &(u8,u8,u8,u8)){
-        if(!self.pos_valid(x_pos,y_pos)){
+        if !self.pos_valid(x_pos,y_pos) {
             return;
         }
         let index: usize = self.get_index(x_pos,y_pos);
@@ -83,7 +83,7 @@ impl Canvas{
     //TODO
     pub fn set_hue_safe(&mut self, x_pos: i32, y_pos: i32, hsv: &(f64,f64,f64)){
         let index: usize = self.get_index(x_pos,y_pos);
-        if(!self.pos_valid(x_pos,y_pos)){
+        if !self.pos_valid(x_pos,y_pos) {
             return;
         }
 
@@ -117,7 +117,7 @@ impl Canvas{
      */
     /// Increments the huemap at a given point, clamping it to 0-360
     pub fn increment_huemap(&mut self, x_pos: i32, y_pos: i32, start_hsv: (f64,f64,f64), increment: f64){
-        if(!self.pos_valid(x_pos,y_pos)){
+        if !self.pos_valid(x_pos,y_pos) {
             return;
         }
 

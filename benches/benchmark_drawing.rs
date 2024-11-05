@@ -2,10 +2,9 @@
 use std::env;
 use cgmath::Vector2;
 use criterion::{criterion_group, criterion_main, Criterion};
-use pixels::{Error, Pixels, SurfaceTexture};
+use pixels::{Pixels, SurfaceTexture};
 use winit::dpi::LogicalSize;
-use winit::event::{Event, VirtualKeyCode};
-use winit::event_loop::{ControlFlow, EventLoop};
+use winit::event_loop::EventLoop;
 use winit::window::WindowBuilder;
 use winit_input_helper::WinitInputHelper;
 use barnes_hut::bh_runner::BarnesHutRunner;
@@ -26,8 +25,8 @@ fn criterion_benchmark(c: &mut Criterion) {
     //pre update
     env_logger::init();
     let event_loop = EventLoop::new();
-    let mut input = WinitInputHelper::new();
-    let mut draw_boxes: bool = false;
+    let input = WinitInputHelper::new();
+    let draw_boxes: bool = false;
     let mut canvas: Canvas = Canvas::new(WIDTH,HEIGHT, (0,0,0,0));
     let window = {
         let size = LogicalSize::new(WIDTH_F, HEIGHT_F);
@@ -64,7 +63,7 @@ fn criterion_benchmark(c: &mut Criterion) {
         b.iter(|| {
             runner.iterate(&mut qt, &mut bodies);
 
-            match (draw_boxes) {
+            match draw_boxes {
                 true => { recursively_draw_tree(&mut canvas, &qt); },
                 false => { recursively_draw_tree_no_box(&mut canvas, &qt); }
             }
@@ -93,7 +92,7 @@ fn recursively_draw_tree(canvas: &mut Canvas, qt: &Quadtree){
 }
 
 fn draw_bodies(canvas: &mut Canvas, bodies: &Vec<Body>){
-    match(bodies.is_empty()){
+    match bodies.is_empty(){
         true => {}
         false => {
             for body in bodies{
@@ -107,7 +106,7 @@ fn update_pixel_heat(canvas: &mut Canvas, body: &Body){
     let x_pos: i32 = body.pos.x.round() as i32;
     let y_pos: i32 = body.pos.y.round() as i32;
 
-    if(!canvas.pos_valid(x_pos,y_pos)){
+    if !canvas.pos_valid(x_pos,y_pos) {
         return;
     }
 

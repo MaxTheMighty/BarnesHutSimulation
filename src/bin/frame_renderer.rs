@@ -1,4 +1,3 @@
-use std::error::Error;
 use image::{ImageBuffer, Rgb};
 use barnes_hut::bh_runner::BarnesHutRunner;
 use barnes_hut::body::Body;
@@ -53,7 +52,7 @@ fn main() -> Result<(), image::ImageError> {
 }
 
 fn draw_bodies(canvas: &mut Canvas, bodies: &Vec<Body>){
-    match(bodies.is_empty()){
+    match bodies.is_empty(){
         true => {}
         false => {
             for body in bodies{
@@ -67,7 +66,7 @@ fn update_pixel_heat(canvas: &mut Canvas, body: &Body){
     let x_pos: i32 = body.pos.x.round() as i32;
     let y_pos: i32 = body.pos.y.round() as i32;
 
-    if(!canvas.pos_valid(x_pos,y_pos)){
+    if !canvas.pos_valid(x_pos,y_pos) {
         return;
     }
 

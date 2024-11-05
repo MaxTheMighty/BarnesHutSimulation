@@ -2,8 +2,7 @@ use cgmath::Vector2;
 use barnes_hut::bh_runner::BarnesHutRunner;
 use barnes_hut::body::Body;
 use barnes_hut::quadtree::{Quadtree, Rectangle};
-use barnes_hut::canvas::Canvas;
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use criterion::{criterion_group, criterion_main, Criterion};
 
 fn simulation(iterations: i32) {
 

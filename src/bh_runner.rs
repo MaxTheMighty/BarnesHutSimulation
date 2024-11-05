@@ -1,11 +1,10 @@
-use std::f32::consts::PI;
-use std::ops::{Deref, DerefMut};
-use crate::quadtree::{Quadtree, Rectangle};
+use std::ops::DerefMut;
+use crate::quadtree::Quadtree;
 use crate::gravity;
 use cgmath::{MetricSpace, Vector2};
 use crate::body::Body;
 use rand::prelude::*;
-use rand_distr::{Distribution, Normal, StandardNormal};
+use rand_distr::{Distribution, Normal};
 pub struct BarnesHutRunner {
     pub theta: f64,
     pub paused: bool
@@ -176,7 +175,7 @@ impl BarnesHutRunner{
 
 
     pub fn iterate(&mut self, quadtree: &mut Quadtree, bodies: &mut Vec<Body>){
-        if(self.paused){
+        if self.paused {
             return;
         }
 

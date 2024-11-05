@@ -78,7 +78,7 @@ fn main() -> Result<(), Error> {
 }
 
 fn draw(buffer: &mut [u8], my_buffer: &mut Vec<(u8,u8,u8,u8)>){
-    for (i,mut pixel) in buffer.chunks_exact_mut(4).enumerate(){
+    for (i,pixel) in buffer.chunks_exact_mut(4).enumerate(){
         pixel[0] = my_buffer[i].0;
         pixel[1] = my_buffer[i].1;
         pixel[2] = my_buffer[i].2;
