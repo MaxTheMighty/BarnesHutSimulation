@@ -1,18 +1,27 @@
 use glam::Vec3;
-use crate::body::Body;
+use crate::body3::Body3;
 
 #[derive(Debug)]
 pub struct Octree{
     pub left_top_back_corner:Vec3,
     pub right_bottom_front_corner:Vec3,
-    pub body: Option<Body>,
+    pub body: Option<Body3>,
     pub subregions: Option<[Box<Octree>;8]>,
     pub center:Vec3,
     pub center_of_mass:Vec3,
     pub total_mass: f32,
 }
 
-
+enum CUBE {
+    A,
+    B,
+    C,
+    D,
+    E,
+    F,
+    G,
+    H,
+}
 impl Octree{
     pub fn new(corners: [Vec3;2]) -> Octree{
         Self {
@@ -41,12 +50,67 @@ impl Octree{
             pos.z >= self.left_top_back_corner.z && pos.z < self.right_bottom_front_corner.z;
     }
 
+    pub fn subregion_index(&self, pos: Vec3) -> CUBE{
+        // check for the center plane
+        if pos.x <= self.center.x {
+            if pos.y <= self.center.y {
+                if pos.z <= self.center.z {
+                    // < < <
+                    return CUBE::A;
+                } else {
+                    // < < >
+                    return CUBE::E;
+                }
+            } else {
+                if pos.z <= self.center.z {
+                    // < > <
+                    return CUBE::C;
+                } else {
+                    // < > >
+                    return CUBE::G;
+                }
+            }
+        } else {
+            if pos.y <= self.center.y {
+                if pos.z <= self.center.z {
+                    // > < <
+                    return CUBE::B;
+                } else {
+                    // > < >
+                    return CUBE::F;
+                }
+            } else {
+                if pos.z <= self.center.z {
+                    // > > <
+                    return CUBE::D;
+                } else {
+                    
+                    // > > >
+                    return CUBE::H;
+
+                }
+            }
+        }
+    }
+
+
+    pub fn insert(&self, body: Body3){
+        if !self.pos_within(body.pos){
+            return;
+        }
+
+
+    }
+
     pub fn subdivide(&mut self){
         // this assumes the octs are perfect cubes and will not be negative
         // the simulation will not scale this time
         // we will think of other ways to solve this
         // let length: f32 = (self.right_bottom_front_corner.x - self.left_top_back_corner.x).abs() / 2.0;
 
+        if self.subregions.is_some(){
+            return;
+        }
 
         self.subregions = Some([
             //A
@@ -137,6 +201,14 @@ mod tests{
 
     #[test]
     fn oct_subdivide(){
+        let mut tree: Octree = Octree::new([Vec3::new(0.0,0.0,0.0),Vec3::new(1000.0,1000.0,1000.0)]);
+        tree.subdivide();
+        if tree.subregions.is_some(){
+            for region in tree.subregions.iter(){
+                println!("{:?}",region);
+            }
+        }
+
 
     }
 
