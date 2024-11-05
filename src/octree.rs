@@ -35,6 +35,12 @@ impl Octree{
         return (bottom_right_front_corner + top_left_back_corner) * 0.5;
     }
 
+    pub fn pos_within(&self, pos: Vec3) -> bool{
+        return pos.x >= self.left_top_back_corner.x && pos.x < self.right_bottom_front_corner.x &&
+            pos.y >= self.left_top_back_corner.y && pos.y < self.right_bottom_front_corner.y &&
+            pos.z >= self.left_top_back_corner.z && pos.z < self.right_bottom_front_corner.z;
+    }
+
     pub fn subdivide(&mut self){
         // this assumes the octs are perfect cubes and will not be negative
         // the simulation will not scale this time
@@ -104,11 +110,6 @@ impl Octree{
                 ]
             ))
         ]);
-
-
-
-
-
     }
 
 
@@ -137,5 +138,17 @@ mod tests{
     #[test]
     fn oct_subdivide(){
 
+    }
+
+
+    #[test]
+    fn pos_within(){
+        let tree: Octree = Octree::new([Vec3::new(0.0,0.0,0.0),Vec3::new(10.0,10.0,10.0)]);
+        let position_a: Vec3 = Vec3::new(5.0,5.0,5.0);
+        assert_eq!(tree.pos_within(position_a), true);
+        assert_eq!(tree.pos_within(Vec3::new(0.0,0.0,0.0)), true);
+        assert_eq!(tree.pos_within(Vec3::new(10.0,10.0,10.0)), false);
+        assert_eq!(tree.pos_within(Vec3::new(11.0,10.0,10.0)), false);
+        assert_eq!(tree.pos_within(Vec3::new(9.9,9.9,11.0)), false);
     }
 }

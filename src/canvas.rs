@@ -128,7 +128,7 @@ impl Canvas{
         }
         self.huemap[index].0 += increment;
 
-        self.huemap[index].0.clamp(0.0,360.0);
+        let _ = self.huemap[index].0.clamp(0.0,360.0);
 
     }
 
