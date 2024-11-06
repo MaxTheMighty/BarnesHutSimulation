@@ -12,6 +12,8 @@ pub struct Octree{
     pub total_mass: f32,
 }
 
+#[derive(Debug)]
+#[derive(PartialEq)]
 enum CUBE {
     A,
     B,
@@ -22,6 +24,8 @@ enum CUBE {
     G,
     H,
 }
+
+
 impl Octree{
     pub fn new(corners: [Vec3;2]) -> Octree{
         Self {
@@ -56,37 +60,37 @@ impl Octree{
             if pos.y <= self.center.y {
                 if pos.z <= self.center.z {
                     // < < <
-                    return CUBE::A;
+                    return CUBE::E;
                 } else {
                     // < < >
-                    return CUBE::E;
+                    return CUBE::A;
                 }
             } else {
                 if pos.z <= self.center.z {
                     // < > <
-                    return CUBE::C;
+                    return CUBE::G;
                 } else {
                     // < > >
-                    return CUBE::G;
+                    return CUBE::C;
                 }
             }
         } else {
             if pos.y <= self.center.y {
                 if pos.z <= self.center.z {
                     // > < <
-                    return CUBE::B;
+                    return CUBE::F;
                 } else {
                     // > < >
-                    return CUBE::F;
+                    return CUBE::B;
                 }
             } else {
                 if pos.z <= self.center.z {
                     // > > <
-                    return CUBE::D;
-                } else {
-                    
-                    // > > >
                     return CUBE::H;
+                } else {
+
+                    // > > >
+                    return CUBE::D;
 
                 }
             }
@@ -115,7 +119,7 @@ impl Octree{
         self.subregions = Some([
             //A
             Box::new(Octree::new(
-                [Vec3::new(self.left_top_back_corner.x, self.right_bottom_front_corner.y, self.center.z),
+                [Vec3::new(self.left_top_back_corner.x, self.left_top_back_corner.y, self.center.z),
                     Vec3::new(self.center.x, self.center.y, self.right_bottom_front_corner.z)])),
 
             //B
@@ -183,7 +187,7 @@ impl Octree{
 
 #[cfg(test)]
 mod tests{
-    use crate::octree::Octree;
+    use crate::octree::{Octree, CUBE};
     use glam::{ Vec3};
     #[test]
     fn oct_center(){
@@ -222,5 +226,18 @@ mod tests{
         assert_eq!(tree.pos_within(Vec3::new(10.0,10.0,10.0)), false);
         assert_eq!(tree.pos_within(Vec3::new(11.0,10.0,10.0)), false);
         assert_eq!(tree.pos_within(Vec3::new(9.9,9.9,11.0)), false);
+    }
+
+    #[test]
+    fn subtree_index(){
+        let mut tree: Octree = Octree::new([Vec3::new(0.0,0.0,0.0),Vec3::new(1000.0,1000.0,1000.0)]);
+        assert_eq!(tree.subregion_index(Vec3::new(250.0,250.0,750.0)), CUBE::A);
+        assert_eq!(tree.subregion_index(Vec3::new(750.0,250.0,750.0)), CUBE::B);
+        assert_eq!(tree.subregion_index(Vec3::new(250.0,750.0,750.0)), CUBE::C);
+        assert_eq!(tree.subregion_index(Vec3::new(750.0,750.0,750.0)), CUBE::D);
+        assert_eq!(tree.subregion_index(Vec3::new(250.0,250.0,250.0)), CUBE::E);
+        assert_eq!(tree.subregion_index(Vec3::new(750.0,250.0,250.0)), CUBE::F);
+        assert_eq!(tree.subregion_index(Vec3::new(250.0,750.0,250.0)), CUBE::G);
+        assert_eq!(tree.subregion_index(Vec3::new(750.0,750.0,250.0)), CUBE::H);
     }
 }
