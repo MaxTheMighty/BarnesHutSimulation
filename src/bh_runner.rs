@@ -5,6 +5,7 @@ use crate::gravity;
 use cgmath::{MetricSpace, Vector2};
 use crate::body::Body;
 use rand::prelude::*;
+use rand::thread_rng;
 use rand_distr::{Distribution, Normal, StandardNormal};
 pub struct BarnesHutRunner {
     pub theta: f64,
@@ -51,7 +52,7 @@ impl BarnesHutRunner{
     }
 
     pub fn generate_bivariate_random_dist(&mut self, bodies: &mut Vec<Body>, width: f64, height: f64, body_count: i32, body_mass: f64, spread: f64) {
-        let mut rng = thread_rng();
+        let mut rng = rand::rng();
 
 
         // Calculate the center of the space

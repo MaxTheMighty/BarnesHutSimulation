@@ -7,18 +7,23 @@ edition = "2021"
 
 [dependencies]
 cgmath = "0.18.0"
-env_logger = "0.10"
+env_logger = "0.11.8"
 error-iter = "0.4"
-log = "0.4"
-pixels = "0.13.0"
-winit = "0.28"
-winit_input_helper = "0.14"
+pixels = "0.15.0"
+winit_input_helper = "0.16.0"
 fastrand = "2.1.0"
-rand = "0.8.5"
-rand_distr = "0.4.3"
+rand = "0.9.2"
+rand_distr = "0.5.1"
 hsv = "0.1.1"
-image = "0.24.7"
-wgpu = "22.1.0"
+image = "0.25.6"
+anyhow = "1.0"
+winit = { version = "0.30", features = ["android-native-activity"] }
+log = "0.4"
+wgpu = "26.0.1"
+pollster = "0.3"
+wasm-bindgen = "0.2.100"
+wasm-bindgen-futures = "0.4.50"
+deepsize = "0.2.0"
 
 [dev-dependencies]
 criterion = { version = "0.4", features = ["html_reports"] }
