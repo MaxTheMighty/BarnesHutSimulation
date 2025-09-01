@@ -1,4 +1,5 @@
 use std::sync::Arc;
+use log::info;
 use wgpu::{Surface, SurfaceCapabilities, SurfaceConfiguration, Device, Queue};
 use winit::dpi::PhysicalSize;
 use winit::window::Window;
@@ -27,13 +28,16 @@ impl WGPUContainer {
 
         let surface: Surface = instance.create_surface(window.clone()).expect("Couldn't create a surface");
         
+        info!("Surface selected: {:#?}", surface);
+        
         let adapter: wgpu::Adapter = instance.request_adapter(&wgpu::RequestAdapterOptions {
             power_preference: wgpu::PowerPreference::default(),
             compatible_surface: Some(&surface),
             force_fallback_adapter: false,
         }).await?;
-
-        println!("Adapter selected: {:#?}",adapter);
+    
+        
+        info!("Adapter selected: {:#?}",adapter);
 
         let (device, queue) = adapter.request_device(&wgpu::DeviceDescriptor {
             label: None,

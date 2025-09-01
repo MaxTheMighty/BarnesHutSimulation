@@ -1,3 +1,4 @@
+use crate::gui::state::State;
 use std::sync::Arc;
 use log::info;
 use winit::application::ApplicationHandler;
@@ -6,8 +7,6 @@ use winit::event::{DeviceId, KeyEvent, WindowEvent};
 use winit::event_loop::ActiveEventLoop;
 use winit::keyboard::{KeyCode, PhysicalKey};
 use winit::window::Window;
-use crate::gui::state::State;
-
 
 // Container for our application, with special cfg's for web assembly
 pub struct App {
@@ -28,12 +27,11 @@ impl App {
     }
 
     fn handle_mouse(&mut self, _id: &DeviceId, position: &PhysicalPosition<f64>) {
-        println!("Mouse position: {position:?}");
-        let red_color: f32 =  position.x as f32 / 1600.0f32;
-        self.state.as_mut().unwrap().rgb_color.0 = [red_color,0.0,0.0];
+        info!("Mouse position: {position:?}");
+        let red_color: f32 = position.x as f32 / 1600.0f32;
+        self.state.as_mut().unwrap().rgb_color.0 = [red_color, 0.0, 0.0];
     }
 }
-
 
 impl ApplicationHandler<State> for App {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
@@ -63,14 +61,13 @@ impl ApplicationHandler<State> for App {
             Some(canvas) => canvas,
             None => return,
         };
-        
-        
+
         match event {
             WindowEvent::CursorMoved {
                 device_id: id,
-                position
+                position,
             } => {
-                self.handle_mouse(&id,&position);
+                self.handle_mouse(&id, &position);
             }
             WindowEvent::CloseRequested => event_loop.exit(),
             WindowEvent::Resized(size) => state.resize(size.width, size.height),
@@ -90,11 +87,11 @@ impl ApplicationHandler<State> for App {
             }
             WindowEvent::KeyboardInput {
                 event:
-                KeyEvent {
-                    physical_key: PhysicalKey::Code(code),
-                    state,
-                    ..
-                },
+                    KeyEvent {
+                        physical_key: PhysicalKey::Code(code),
+                        state,
+                        ..
+                    },
                 ..
             } => match (code, state.is_pressed()) {
                 (KeyCode::Escape, true) => event_loop.exit(),

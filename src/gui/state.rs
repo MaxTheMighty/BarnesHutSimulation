@@ -25,8 +25,13 @@ impl State {
 
     }
 
-    pub fn resize(&mut self, _width: u32, _height: u32) {
-        // We'll do stuff here in the next tutorial
+    pub fn resize(&mut self, width: u32, height: u32) {
+        if width > 0 && height > 0 {
+            self.gpu.config.width = width;
+            self.gpu.config.height = height;
+            self.gpu.surface.configure(&self.gpu.device, &self.gpu.config);
+            self.gpu.is_surface_configured = true;
+        }
     }
 
     pub fn update(&mut self) {
@@ -43,22 +48,26 @@ impl State {
             return Ok(());
         }
 
+        // The current texture to draw to
         let output = self.gpu.surface.get_current_texture()?;
 
+        // A view of that texture. A view allows us to control how the render code interacts with the texture
         let view = output.texture.create_view(&wgpu::TextureViewDescriptor::default());
 
+        // The encoder stores the commands we are going to send to the GPU, like a command buffer
         let mut encoder = self.gpu.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
             label: Some("Render Encoder"),
         });
 
 
+        // The code exists in an enclosure for some ownership workaround (I think)
         {
             let color_r = self.rgb_color.0[0] as f64;
             let color_g = self.rgb_color.0[1] as f64;
             let color_b = self.rgb_color.0[2] as f64;
             let color_a = 1.0 ;
-            println!("color: {:#?}",self.rgb_color);
 
+            // A render pass is born from the encoder and has all the methods for actually rendering
             let _render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("Render Pass"),
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment {
@@ -82,7 +91,10 @@ impl State {
         }
 
         // submit will accept anything that implements IntoIter
+        // Here we turn the encoder into an iter and send it
         self.gpu.queue.submit(std::iter::once(encoder.finish()));
+
+        // Show the output
         output.present();
 
         Ok(())

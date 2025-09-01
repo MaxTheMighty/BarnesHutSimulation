@@ -115,3 +115,4 @@
 //
 // criterion_group!(benches, criterion_benchmark);
 // criterion_main!(benches);
+pub fn main() {}
