@@ -11,6 +11,8 @@ pub struct WGPUContainer {
     pub device: Device,
     pub queue: Queue,
     pub config: SurfaceConfiguration,
+    pub pipeline: wgpu::RenderPipeline,
+    pub color_pipeline: wgpu::RenderPipeline,
     pub is_surface_configured: bool,
 }
 
@@ -27,16 +29,16 @@ impl WGPUContainer {
         });
 
         let surface: Surface = instance.create_surface(window.clone()).expect("Couldn't create a surface");
-        
+
         info!("Surface selected: {:#?}", surface);
-        
+
         let adapter: wgpu::Adapter = instance.request_adapter(&wgpu::RequestAdapterOptions {
             power_preference: wgpu::PowerPreference::default(),
             compatible_surface: Some(&surface),
             force_fallback_adapter: false,
         }).await?;
-    
-        
+
+
         info!("Adapter selected: {:#?}",adapter);
 
         let (device, queue) = adapter.request_device(&wgpu::DeviceDescriptor {
@@ -65,12 +67,114 @@ impl WGPUContainer {
             view_formats: vec![],
         };
 
+        let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor{
+            label: Some("Shader"),
+            source: wgpu::ShaderSource::Wgsl(include_str!("/Users/maxwell/RustroverProjects/BarnesHutSimulation/shaders/shader.wgsl").into())
+        });
+
+        let color_shader = device.create_shader_module(wgpu::ShaderModuleDescriptor{
+            label: Some("Color shader"),
+            source: wgpu::ShaderSource::Wgsl(include_str!("/Users/maxwell/RustroverProjects/BarnesHutSimulation/shaders/color_shader.wgsl").into())
+        });
+
+        // Create a second pipeline that uses the triangle's position data to create a color that it then sends to the fragment shader.
+        // Have the app swap between these when you press the spacebar.
+        // Hint: you'll need to modify VertexOutput
+
+        let render_pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor{
+            label: Some("Render pipeline layout"),
+            bind_group_layouts: &[],
+            push_constant_ranges: &[]
+        });
+
+        let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor{
+            label: Some("Render pipeline"),
+            layout: Some(&render_pipeline_layout),
+            vertex: wgpu::VertexState {
+                module: &shader,
+                entry_point: Some("vs_main"),
+                buffers: &[],
+                compilation_options: wgpu::PipelineCompilationOptions::default(),
+            },
+            fragment: Some(wgpu::FragmentState{
+                module: &shader,
+                entry_point: Some("fs_main"),
+                targets: &[Some(wgpu::ColorTargetState{
+                    format: surface_config.format,
+                    blend: Some(wgpu::BlendState::REPLACE),
+                    write_mask: wgpu::ColorWrites::ALL
+                })],
+                compilation_options: wgpu::PipelineCompilationOptions::default()
+            }),
+            primitive: wgpu::PrimitiveState {
+                topology: wgpu::PrimitiveTopology::TriangleList,
+                strip_index_format: None,
+                front_face: wgpu::FrontFace::Ccw,
+                cull_mode: Some(wgpu::Face::Back),
+                polygon_mode: wgpu::PolygonMode::Fill,
+                unclipped_depth: false,
+                conservative: false
+            },
+            depth_stencil: None,
+            multisample: wgpu::MultisampleState {
+                count: 1,
+                mask: !0,
+                alpha_to_coverage_enabled: false
+            },
+            multiview: None,
+            cache: None
+        }
+        );
+
+        let color_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor{
+            label: Some("Color Render pipeline"),
+            layout: Some(&render_pipeline_layout),
+            vertex: wgpu::VertexState {
+                module: &color_shader,
+                entry_point: Some("vs_main"),
+                buffers: &[],
+                compilation_options: wgpu::PipelineCompilationOptions::default(),
+            },
+            fragment: Some(wgpu::FragmentState{
+                module: &color_shader,
+                entry_point: Some("fs_main"),
+                targets: &[Some(wgpu::ColorTargetState{
+                    format: surface_config.format,
+                    blend: Some(wgpu::BlendState::REPLACE),
+                    write_mask: wgpu::ColorWrites::ALL
+                })],
+                compilation_options: wgpu::PipelineCompilationOptions::default()
+            }),
+            primitive: wgpu::PrimitiveState {
+                topology: wgpu::PrimitiveTopology::TriangleList,
+                strip_index_format: None,
+                front_face: wgpu::FrontFace::Ccw,
+                cull_mode: Some(wgpu::Face::Back),
+                polygon_mode: wgpu::PolygonMode::Fill,
+                unclipped_depth: false,
+                conservative: false
+            },
+            depth_stencil: None,
+            multisample: wgpu::MultisampleState {
+                count: 1,
+                mask: !0,
+                alpha_to_coverage_enabled: false
+            },
+            multiview: None,
+            cache: None
+        }
+        );
+
+
         Ok(Self {
             surface,
             device,
             queue,
             config: surface_config,
+            pipeline: render_pipeline,
+            color_pipeline,
             is_surface_configured: false,
+
         })
     }
 }
