@@ -1,13 +1,15 @@
 use std::sync::Arc;
 use image::Rgb;
 use winit::window::Window;
+use crate::gpu::vertex::VERTICES;
 use crate::gui::wgpu_container::WGPUContainer;
 // The current State of our program, contains various GPU structs.
 #[derive(Debug)]
 pub struct State {
     pub(crate) window: Arc<Window>,
     pub(crate) gpu: WGPUContainer,
-    pub(crate) rgb_color: Rgb<f32>
+    pub(crate) rgb_color: Rgb<f32>,
+    pub(crate) num_vertices: u32,
 }
 
 impl State {
@@ -16,11 +18,13 @@ impl State {
     pub async fn new(window: Arc<Window>) -> anyhow::Result<Self> {
 
         let wgpu_container: WGPUContainer = WGPUContainer::new(window.clone()).await?;
-
+        let num_vertices = VERTICES.len() as u32;
+        
         Ok(Self {
             window,
             gpu: wgpu_container,
             rgb_color: Rgb::from([0.0,0.0,0.0]),
+            num_vertices
         })
 
     }
@@ -89,8 +93,9 @@ impl State {
                 timestamp_writes: None,
             });
 
-            render_pass.set_pipeline(&self.gpu.color_pipeline);
-            render_pass.draw(0..3,0..1);
+            render_pass.set_pipeline(&self.gpu.current_pipeline);
+            render_pass.set_vertex_buffer(0, self.gpu.vertex_buffer.slice(..));
+            render_pass.draw(0..self.num_vertices,0..1);
         }
 
         // submit will accept anything that implements IntoIter
@@ -101,5 +106,9 @@ impl State {
         output.present();
 
         Ok(())
+    }
+    
+    pub fn switch_pipeline(&mut self) {
+        self.gpu.switch_pipeline();
     }
 }

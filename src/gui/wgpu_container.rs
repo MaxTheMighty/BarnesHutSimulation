@@ -1,8 +1,10 @@
 use std::sync::Arc;
 use log::info;
 use wgpu::{Surface, SurfaceCapabilities, SurfaceConfiguration, Device, Queue};
+use wgpu::util::{BufferInitDescriptor, DeviceExt};
 use winit::dpi::PhysicalSize;
 use winit::window::Window;
+use crate::gpu::vertex::Vertex;
 
 // Struct containing all the WGPU internals
 #[derive(Debug)]
@@ -12,7 +14,9 @@ pub struct WGPUContainer {
     pub queue: Queue,
     pub config: SurfaceConfiguration,
     pub pipeline: wgpu::RenderPipeline,
+    pub vertex_buffer: wgpu::Buffer,
     pub color_pipeline: wgpu::RenderPipeline,
+    pub current_pipeline: wgpu::RenderPipeline,
     pub is_surface_configured: bool,
 }
 
@@ -56,7 +60,7 @@ impl WGPUContainer {
             .copied()
             .unwrap_or(surface_capabilities.formats[0]);
 
-        let surface_config: SurfaceConfiguration = SurfaceConfiguration {
+        let config: SurfaceConfiguration = SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
             format: surface_format,
             width: size.width,
@@ -76,10 +80,7 @@ impl WGPUContainer {
             label: Some("Color shader"),
             source: wgpu::ShaderSource::Wgsl(include_str!("/Users/maxwell/RustroverProjects/BarnesHutSimulation/shaders/color_shader.wgsl").into())
         });
-
-        // Create a second pipeline that uses the triangle's position data to create a color that it then sends to the fragment shader.
-        // Have the app swap between these when you press the spacebar.
-        // Hint: you'll need to modify VertexOutput
+        
 
         let render_pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor{
             label: Some("Render pipeline layout"),
@@ -93,14 +94,14 @@ impl WGPUContainer {
             vertex: wgpu::VertexState {
                 module: &shader,
                 entry_point: Some("vs_main"),
-                buffers: &[],
+                buffers: &[Vertex::desc()],
                 compilation_options: wgpu::PipelineCompilationOptions::default(),
             },
             fragment: Some(wgpu::FragmentState{
                 module: &shader,
                 entry_point: Some("fs_main"),
                 targets: &[Some(wgpu::ColorTargetState{
-                    format: surface_config.format,
+                    format: config.format,
                     blend: Some(wgpu::BlendState::REPLACE),
                     write_mask: wgpu::ColorWrites::ALL
                 })],
@@ -139,7 +140,7 @@ impl WGPUContainer {
                 module: &color_shader,
                 entry_point: Some("fs_main"),
                 targets: &[Some(wgpu::ColorTargetState{
-                    format: surface_config.format,
+                    format: config.format,
                     blend: Some(wgpu::BlendState::REPLACE),
                     write_mask: wgpu::ColorWrites::ALL
                 })],
@@ -165,16 +166,31 @@ impl WGPUContainer {
         }
         );
 
+        let vertex_buffer = device.create_buffer_init(&BufferInitDescriptor{
+            label: Some("Vertex buffer"),
+            contents: bytemuck::cast_slice(crate::gpu::vertex::VERTICES),
+            usage: wgpu::BufferUsages::VERTEX
+        });
 
         Ok(Self {
             surface,
             device,
             queue,
-            config: surface_config,
+            config,
+            current_pipeline: render_pipeline.clone(),
             pipeline: render_pipeline,
             color_pipeline,
+            vertex_buffer,
             is_surface_configured: false,
 
         })
+    }
+
+    pub fn switch_pipeline(&mut self){
+        if(self.current_pipeline.eq(&self.pipeline)){
+            self.current_pipeline = self.color_pipeline.clone()
+        } else {
+            self.current_pipeline = self.pipeline.clone();
+        }
     }
 }

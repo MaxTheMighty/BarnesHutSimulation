@@ -25,6 +25,7 @@ impl App {
             proxy,
         }
     }
+    
 
     fn handle_mouse(&mut self, _id: &DeviceId, position: &PhysicalPosition<f64>) {
         info!("Mouse position: {position:?}");
@@ -95,6 +96,13 @@ impl ApplicationHandler<State> for App {
                 ..
             } => match (code, state.is_pressed()) {
                 (KeyCode::Escape, true) => event_loop.exit(),
+                (KeyCode::Space, true) => {
+                    if let Some(state) = self.state.as_mut(){
+                        state.switch_pipeline();
+                        log::info!("Current pipeline: {:#?}",state.gpu.current_pipeline)
+                        
+                    }
+                }
                 _ => {}
             },
             _ => {}

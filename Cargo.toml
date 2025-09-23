@@ -24,6 +24,8 @@ pollster = "0.3"
 wasm-bindgen = "0.2.100"
 wasm-bindgen-futures = "0.4.50"
 deepsize = "0.2.0"
+bytemuck = { version = "1.16", features = [ "derive" ] }
+
 
 [dev-dependencies]
 criterion = { version = "0.4", features = ["html_reports"] }
