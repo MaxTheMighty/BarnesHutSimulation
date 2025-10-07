@@ -15,6 +15,7 @@ pub struct WGPUContainer {
     pub config: SurfaceConfiguration,
     pub pipeline: wgpu::RenderPipeline,
     pub vertex_buffer: wgpu::Buffer,
+    pub num_vertices: u32,
     pub color_pipeline: wgpu::RenderPipeline,
     pub current_pipeline: wgpu::RenderPipeline,
     pub is_surface_configured: bool,
@@ -182,8 +183,73 @@ impl WGPUContainer {
             color_pipeline,
             vertex_buffer,
             is_surface_configured: false,
+            num_vertices: 6
 
         })
+    }
+
+    pub fn render(&mut self) -> Result<(),wgpu::SurfaceError>{
+
+
+        // We can't render unless the surface is configured
+        if !self.is_surface_configured {
+            return Ok(());
+        }
+
+        // The current texture to draw to
+        let output = self.surface.get_current_texture()?;
+
+        // A view of that texture. A view allows us to control how the render code interacts with the texture
+        let view = output.texture.create_view(&wgpu::TextureViewDescriptor::default());
+
+        // The encoder stores the commands we are going to send to the GPU, like a command buffer
+        let mut encoder = self.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
+            label: Some("Render Encoder"),
+        });
+
+
+        // The code exists in an enclosure for some ownership workaround (I think)
+        {
+            // let color_r = self.rgb_color.0[0] as f64;
+            // let color_g = self.rgb_color.0[1] as f64;
+            // let color_b = self.rgb_color.0[2] as f64;
+            // let color_a = 1.0 ;
+
+            // A render pass is born from the encoder and has all the methods for actually rendering
+            let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                label: Some("Render Pass"),
+                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                    view: &view,
+                    depth_slice: None,
+                    resolve_target: None,
+                    ops: wgpu::Operations {
+                        load: wgpu::LoadOp::Clear(wgpu::Color {
+                            r: 0.0,
+                            g: 0.0,
+                            b: 0.0,
+                            a: 0.0,
+                        }),
+                        store: wgpu::StoreOp::Store,
+                    },
+                })],
+                depth_stencil_attachment: None,
+                occlusion_query_set: None,
+                timestamp_writes: None,
+            });
+
+            render_pass.set_pipeline(&self.current_pipeline);
+            render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
+            render_pass.draw(0..self.num_vertices,0..1);
+        }
+
+        // submit will accept anything that implements IntoIter
+        // Here we turn the encoder into an iter and send it
+        self.queue.submit(std::iter::once(encoder.finish()));
+
+        // Show the output
+        output.present();
+
+        Ok(())
     }
 
     pub fn switch_pipeline(&mut self){
