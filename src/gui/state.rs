@@ -9,7 +9,6 @@ pub struct State {
     pub(crate) window: Arc<Window>,
     pub(crate) gpu: WGPUContainer,
     pub(crate) rgb_color: Rgb<f32>,
-    pub(crate) num_vertices: u32,
 }
 
 impl State {
@@ -18,13 +17,11 @@ impl State {
     pub async fn new(window: Arc<Window>) -> anyhow::Result<Self> {
 
         let wgpu_container: WGPUContainer = WGPUContainer::new(window.clone()).await?;
-        let num_vertices = VERTICES.len() as u32;
         
         Ok(Self {
             window,
             gpu: wgpu_container,
             rgb_color: Rgb::from([0.0,0.0,0.0]),
-            num_vertices
         })
 
     }
@@ -47,11 +44,7 @@ impl State {
     pub(crate) fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
         self.window.request_redraw();
 
-        return self.gpu.render();
-        
+        self.gpu.render()
     }
     
-    pub fn switch_pipeline(&mut self) {
-        self.gpu.switch_pipeline();
-    }
 }

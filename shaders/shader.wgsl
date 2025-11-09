@@ -1,5 +1,8 @@
 // Vertex shader
 
+// Update the input struct to read the vertex data
+// This is aligned with how we defined the vertex buffer when we created
+// the pipeline.
 struct VertexInput {
     @location(0) position: vec3<f32>,
     @location(1) color: vec3<f32>

@@ -1,10 +1,10 @@
 use std::sync::Arc;
 use log::info;
-use wgpu::{Surface, SurfaceCapabilities, SurfaceConfiguration, Device, Queue};
+use wgpu::{Surface, SurfaceCapabilities, SurfaceConfiguration, Device, Queue, IndexFormat};
 use wgpu::util::{BufferInitDescriptor, DeviceExt};
 use winit::dpi::PhysicalSize;
 use winit::window::Window;
-use crate::gpu::vertex::Vertex;
+use crate::gpu::vertex::{Vertex, VERTICES};
 
 // Struct containing all the WGPU internals
 #[derive(Debug)]
@@ -15,8 +15,9 @@ pub struct WGPUContainer {
     pub config: SurfaceConfiguration,
     pub pipeline: wgpu::RenderPipeline,
     pub vertex_buffer: wgpu::Buffer,
+    pub index_buffer: wgpu::Buffer,
     pub num_vertices: u32,
-    pub color_pipeline: wgpu::RenderPipeline,
+    pub num_indices: u32,
     pub current_pipeline: wgpu::RenderPipeline,
     pub is_surface_configured: bool,
 }
@@ -128,49 +129,16 @@ impl WGPUContainer {
         }
         );
 
-        let color_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor{
-            label: Some("Color Render pipeline"),
-            layout: Some(&render_pipeline_layout),
-            vertex: wgpu::VertexState {
-                module: &color_shader,
-                entry_point: Some("vs_main"),
-                buffers: &[],
-                compilation_options: wgpu::PipelineCompilationOptions::default(),
-            },
-            fragment: Some(wgpu::FragmentState{
-                module: &color_shader,
-                entry_point: Some("fs_main"),
-                targets: &[Some(wgpu::ColorTargetState{
-                    format: config.format,
-                    blend: Some(wgpu::BlendState::REPLACE),
-                    write_mask: wgpu::ColorWrites::ALL
-                })],
-                compilation_options: wgpu::PipelineCompilationOptions::default()
-            }),
-            primitive: wgpu::PrimitiveState {
-                topology: wgpu::PrimitiveTopology::TriangleList,
-                strip_index_format: None,
-                front_face: wgpu::FrontFace::Ccw,
-                cull_mode: Some(wgpu::Face::Back),
-                polygon_mode: wgpu::PolygonMode::Fill,
-                unclipped_depth: false,
-                conservative: false
-            },
-            depth_stencil: None,
-            multisample: wgpu::MultisampleState {
-                count: 1,
-                mask: !0,
-                alpha_to_coverage_enabled: false
-            },
-            multiview: None,
-            cache: None
-        }
-        );
-
         let vertex_buffer = device.create_buffer_init(&BufferInitDescriptor{
             label: Some("Vertex buffer"),
             contents: bytemuck::cast_slice(crate::gpu::vertex::VERTICES),
             usage: wgpu::BufferUsages::VERTEX
+        });
+
+        let index_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor{
+            label: Some("Index Buffer"),
+            contents: bytemuck::cast_slice(crate::gpu::vertex::INDICES),
+            usage: wgpu::BufferUsages::INDEX,
         });
 
         Ok(Self {
@@ -180,10 +148,11 @@ impl WGPUContainer {
             config,
             current_pipeline: render_pipeline.clone(),
             pipeline: render_pipeline,
-            color_pipeline,
             vertex_buffer,
+            index_buffer,
+            num_indices: crate::gpu::vertex::INDICES.len() as u32,
             is_surface_configured: false,
-            num_vertices: 6
+            num_vertices: VERTICES.len() as u32 // tell the pipeline to draw all the vertices in the const
 
         })
     }
@@ -210,10 +179,6 @@ impl WGPUContainer {
 
         // The code exists in an enclosure for some ownership workaround (I think)
         {
-            // let color_r = self.rgb_color.0[0] as f64;
-            // let color_g = self.rgb_color.0[1] as f64;
-            // let color_b = self.rgb_color.0[2] as f64;
-            // let color_a = 1.0 ;
 
             // A render pass is born from the encoder and has all the methods for actually rendering
             let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
@@ -238,8 +203,11 @@ impl WGPUContainer {
             });
 
             render_pass.set_pipeline(&self.current_pipeline);
+            // assign the entire vertex buffer (hence the .. in .slice()) at slot 0
             render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
-            render_pass.draw(0..self.num_vertices,0..1);
+            render_pass.set_index_buffer(self.index_buffer.slice(..), IndexFormat::Uint16);
+            // render_pass.draw(0..self.num_vertices,0..1);
+            render_pass.draw_indexed(0..self.num_indices,0,0..1);
         }
 
         // submit will accept anything that implements IntoIter
@@ -252,11 +220,4 @@ impl WGPUContainer {
         Ok(())
     }
 
-    pub fn switch_pipeline(&mut self){
-        if(self.current_pipeline.eq(&self.pipeline)){
-            self.current_pipeline = self.color_pipeline.clone()
-        } else {
-            self.current_pipeline = self.pipeline.clone();
-        }
-    }
 }

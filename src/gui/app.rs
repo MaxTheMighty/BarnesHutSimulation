@@ -25,13 +25,7 @@ impl App {
             proxy,
         }
     }
-    
 
-    fn handle_mouse(&mut self, _id: &DeviceId, position: &PhysicalPosition<f64>) {
-        info!("Mouse position: {position:?}");
-        let red_color: f32 = position.x as f32 / 1600.0f32;
-        self.state.as_mut().unwrap().rgb_color.0 = [red_color, 0.0, 0.0];
-    }
 }
 
 impl ApplicationHandler<State> for App {
@@ -68,7 +62,7 @@ impl ApplicationHandler<State> for App {
                 device_id: id,
                 position,
             } => {
-                self.handle_mouse(&id, &position);
+               
             }
             WindowEvent::CloseRequested => event_loop.exit(),
             WindowEvent::Resized(size) => state.resize(size.width, size.height),
@@ -97,11 +91,7 @@ impl ApplicationHandler<State> for App {
             } => match (code, state.is_pressed()) {
                 (KeyCode::Escape, true) => event_loop.exit(),
                 (KeyCode::Space, true) => {
-                    if let Some(state) = self.state.as_mut(){
-                        state.switch_pipeline();
-                        log::info!("Current pipeline: {:#?}",state.gpu.current_pipeline)
-                        
-                    }
+       
                 }
                 _ => {}
             },
