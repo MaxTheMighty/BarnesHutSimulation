@@ -1,4 +1,5 @@
 use std::sync::Arc;
+use image::GenericImageView;
 use log::info;
 use wgpu::{Surface, SurfaceCapabilities, SurfaceConfiguration, Device, Queue, IndexFormat};
 use wgpu::util::{BufferInitDescriptor, DeviceExt};
@@ -72,6 +73,70 @@ impl WGPUContainer {
             alpha_mode: surface_capabilities.alpha_modes[0],
             view_formats: vec![],
         };
+
+        let diffuse_bytes = include_bytes!("../../textures/happy-tree.png");
+        let diffuse_image = image::load_from_memory(diffuse_bytes).unwrap();
+        let diffuse_rgba = diffuse_image.to_rgb8();
+        let dimensions = diffuse_image.dimensions();
+
+        let texture_size = wgpu::Extent3d {
+            width: dimensions.0,
+            height: dimensions.1,
+            // Textures are stored as 3D, ours is 2D so set this to 1 meaning one layer
+            depth_or_array_layers: 1,
+        };
+
+        // Create the texture
+        let diffuse_texture = device.create_texture(
+            &wgpu::TextureDescriptor {
+                size: texture_size,
+                mip_level_count: 1,
+                sample_count: 1,
+                dimension: wgpu::TextureDimension::D2, // ??
+                format: wgpu::TextureFormat::Rgba8UnormSrgb, //use sRGB
+                // TEXTURE_BINDING  means we want to use it as a texture in shaders
+                // COPY_DST means that we want to copy data to this texture
+                usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
+                label: Some("Diffuse_textire"),
+                view_formats: &[]
+            }
+        );
+
+        queue.write_texture(
+            // Define where to copy the pixel data
+            wgpu::TexelCopyTextureInfo{
+                texture: &diffuse_texture,
+                mip_level: 0,
+                origin: wgpu::Origin3d::ZERO,
+                aspect: wgpu::TextureAspect::All
+            },
+            // The data
+            &diffuse_rgba,
+            wgpu::TexelCopyBufferLayout {
+                offset: 0,
+                // 4 bytes per pixel for each row
+                bytes_per_row: Some(4 * dimensions.0),
+                rows_per_image: Some(dimensions.1)
+            },
+            texture_size
+        );
+
+        // Create a view into the texture we uploaded
+        let diffuse_texture_view = diffuse_texture.create_view(&wgpu::TextureViewDescriptor::default());
+
+        // Create a sampler for our texture so we can read data for a given coordinate
+        let diffuse_sampler = device.create_sampler(&wgpu::SamplerDescriptor {
+            address_mode_u: wgpu::AddressMode::ClampToEdge, // What to do when addressing a pixel outside of bounds
+            address_mode_v: wgpu::AddressMode::ClampToEdge,
+            address_mode_w:  wgpu::AddressMode::ClampToEdge,
+            mag_filter: wgpu::FilterMode::Linear, // Define how to read the texture if the sampling is more or less than 1 texel
+            min_filter: wgpu::FilterMode::Nearest,
+            mipmap_filter: wgpu::FilterMode::Nearest,
+            ..Default::default()
+        });
+
+        // Define a bind group layout for our textures so they can be accessed by a shader
+
 
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor{
             label: Some("Shader"),
