@@ -91,7 +91,7 @@ impl ApplicationHandler<State> for App {
             } => match (code, state.is_pressed()) {
                 (KeyCode::Escape, true) => event_loop.exit(),
                 (KeyCode::Space, true) => {
-       
+                    self.state.as_mut().unwrap().gpu.increment_texture();
                 }
                 _ => {}
             },

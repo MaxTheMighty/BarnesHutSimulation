@@ -8,7 +8,6 @@ use crate::gui::wgpu_container::WGPUContainer;
 pub struct State {
     pub(crate) window: Arc<Window>,
     pub(crate) gpu: WGPUContainer,
-    pub(crate) rgb_color: Rgb<f32>,
 }
 
 impl State {
@@ -21,7 +20,6 @@ impl State {
         Ok(Self {
             window,
             gpu: wgpu_container,
-            rgb_color: Rgb::from([0.0,0.0,0.0]),
         })
 
     }
