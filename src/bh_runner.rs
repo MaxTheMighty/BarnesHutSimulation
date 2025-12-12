@@ -1,11 +1,8 @@
-use std::f32::consts::PI;
-use std::ops::{Deref, DerefMut};
+use std::ops::{DerefMut};
 use crate::quadtree::{Quadtree, Rectangle};
 use crate::gravity;
 use cgmath::{MetricSpace, Vector2};
 use crate::body::Body;
-use rand::prelude::*;
-use rand::thread_rng;
 use rand_distr::{Distribution, Normal, StandardNormal};
 pub struct BarnesHutRunner {
     pub theta: f64,

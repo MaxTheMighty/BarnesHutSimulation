@@ -1,9 +1,10 @@
 use std::sync::Arc;
 use log::info;
-use wgpu::{Surface, SurfaceCapabilities, SurfaceConfiguration, Device, Queue, IndexFormat};
+use wgpu::{BindGroupDescriptor, Device, IndexFormat, Queue, ShaderStages, Surface, SurfaceCapabilities, SurfaceConfiguration};
 use wgpu::util::{BufferInitDescriptor, DeviceExt};
 use winit::dpi::PhysicalSize;
 use winit::window::Window;
+use crate::gpu::camera::{Camera, CameraController, CameraUniform};
 use crate::gpu::texture::{self};
 use crate::gpu::vertex::{Vertex, VERTICES};
 
@@ -24,10 +25,15 @@ pub struct WGPUContainer {
     pub num_indices: u32,
     pub current_pipeline: wgpu::RenderPipeline,
     pub is_surface_configured: bool,
+    pub camera: Camera,
+    pub camera_uniform: CameraUniform,
+    pub camera_controller: CameraController,
+    pub camera_buffer: wgpu::Buffer,
+    pub camera_bind_group: wgpu::BindGroup
 }
 
 impl WGPUContainer {
-    pub async fn new(window: Arc<Window>) -> anyhow::Result<Self> {
+    pub async fn new(window: Arc<Window>, camera: Camera) -> anyhow::Result<Self> {
         let size: PhysicalSize<u32> = window.inner_size();
 
         let instance: wgpu::Instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
@@ -140,9 +146,46 @@ impl WGPUContainer {
         });
 
 
+        let mut camera_uniform = CameraUniform::new();
+        camera_uniform.update_view_proj(&camera);
+
+        let camera_buffer = device.create_buffer_init(&BufferInitDescriptor { 
+            label: Some("camera buffer"), 
+            contents: bytemuck::cast_slice(&[camera_uniform]), 
+            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST, 
+        });
+
+        let camera_buffer_bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+            label: Some("camera buffer bind group layout"),
+            entries: &[wgpu::BindGroupLayoutEntry{
+                binding: 0,
+                // Vertex transformations so send it to the VERTEX
+                visibility: ShaderStages::VERTEX,
+                ty: wgpu::BindingType::Buffer { 
+                    // It's uniform so its the same for all buffers
+                    ty: wgpu::BufferBindingType::Uniform, 
+                    // No dynamic offset since we wont change it
+                    has_dynamic_offset: false, 
+                    // No need to define min binding size
+                    min_binding_size: None 
+                },
+                count: None
+            }],
+        });
+
+        let camera_buffer_bind_group = device.create_bind_group(&BindGroupDescriptor{
+            label: Some("camera buffer bind group"),
+            layout: &camera_buffer_bind_group_layout,
+            entries: &[wgpu::BindGroupEntry{
+                binding: 0,
+                resource: camera_buffer.as_entire_binding()
+            }]
+        });
+
+
         let render_pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor{
             label: Some("Render pipeline layout"),
-            bind_group_layouts: &[&texture_bind_group_layout],
+            bind_group_layouts: &[&texture_bind_group_layout, &camera_buffer_bind_group_layout],
             push_constant_ranges: &[]
         });
 
@@ -197,6 +240,7 @@ impl WGPUContainer {
             usage: wgpu::BufferUsages::INDEX,
         });
 
+
         Ok(Self {
             surface,
             device,
@@ -211,8 +255,12 @@ impl WGPUContainer {
             index_buffer,
             num_indices: crate::gpu::vertex::INDICES.len() as u32,
             is_surface_configured: false,
-            num_vertices: VERTICES.len() as u32 // tell the pipeline to draw all the vertices in the const
-
+            num_vertices: VERTICES.len() as u32, // tell the pipeline to draw all the vertices in the const
+            camera,
+            camera_uniform,
+            camera_buffer,
+            camera_bind_group: camera_buffer_bind_group,
+            camera_controller: CameraController { speed: 1.0f32 }
         })
     }
 
@@ -261,9 +309,10 @@ impl WGPUContainer {
                 timestamp_writes: None,
             });
 
-            let bind_group = self.diffuse_bind_groups.get(self.texture_index).unwrap();
+            let texture_bind_group = self.diffuse_bind_groups.get(self.texture_index).unwrap();
             render_pass.set_pipeline(&self.current_pipeline);
-            render_pass.set_bind_group(0, bind_group, &[]);
+            render_pass.set_bind_group(0, texture_bind_group, &[]);
+            render_pass.set_bind_group(1, &self.camera_bind_group, &[]);
             // assign the entire vertex buffer (hence the .. in .slice()) at slot 0
             render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
             render_pass.set_index_buffer(self.index_buffer.slice(..), IndexFormat::Uint16);

@@ -1,5 +1,6 @@
 use crate::gui::state::State;
 use std::sync::Arc;
+use cgmath::{ElementWise, Point3};
 use log::info;
 use winit::application::ApplicationHandler;
 use winit::dpi::PhysicalPosition;
@@ -52,7 +53,7 @@ impl ApplicationHandler<State> for App {
         _window_id: winit::window::WindowId,
         event: WindowEvent,
     ) {
-        let state = match &mut self.state {
+        let app_state = match &mut self.state {
             Some(canvas) => canvas,
             None => return,
         };
@@ -65,15 +66,15 @@ impl ApplicationHandler<State> for App {
                
             }
             WindowEvent::CloseRequested => event_loop.exit(),
-            WindowEvent::Resized(size) => state.resize(size.width, size.height),
+            WindowEvent::Resized(size) => app_state.resize(size.width, size.height),
             WindowEvent::RedrawRequested => {
-                state.update();
-                match state.render() {
+                app_state.update();
+                match app_state.render() {
                     Ok(_) => {}
                     // Reconfigure the surface if it's lost or outdated
                     Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
-                        let size = state.window.inner_size();
-                        state.resize(size.width, size.height);
+                        let size = app_state.window.inner_size();
+                        app_state.resize(size.width, size.height);
                     }
                     Err(e) => {
                         log::error!("Unable to render {}", e);
@@ -91,9 +92,20 @@ impl ApplicationHandler<State> for App {
             } => match (code, state.is_pressed()) {
                 (KeyCode::Escape, true) => event_loop.exit(),
                 (KeyCode::Space, true) => {
-                    self.state.as_mut().unwrap().gpu.increment_texture();
-                }
-                _ => {}
+                    app_state.gpu.increment_texture();
+                },
+                // (KeyCode::ArrowUp, true) => {
+                //     self.state.as_mut().unwrap().gpu.camera.eye.add_assign_element_wise(1.0f32);
+                //     log::info!("Up pressed, camera eye is now {:?}",self.state.as_ref().unwrap().gpu.camera.eye);
+                // },
+                // (KeyCode::ArrowDown, true) => {
+                //     self.state.as_mut().unwrap().gpu.camera.eye.add_assign_element_wise(-1.0f32);
+                //     log::info!("Down pressed, camera eye is now {:?}",self.state.as_ref().unwrap().gpu.camera.eye);
+                // }
+                (_, true) => {
+                   app_state.gpu.camera_controller.handle_key_code(&mut app_state.gpu.camera, code);
+                },
+                (_, false) => {}
             },
             _ => {}
         }
