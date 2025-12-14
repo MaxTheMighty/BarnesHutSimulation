@@ -3,11 +3,14 @@
 
 @compute
 // Workgroup size?
-@workgroup_size(64)
+// This means we define a workgroup by 64 x 1 x 1 threads
+@workgroup_size(64,1,1)
+
 fn main(
     @builtin(global_invocation_id) global_invocation_id: vec3<u32>
 ) {
     // Get the index based on the current invocation id
+    // Since our workgroup is one dimensional we just get the x value
     let index = global_invocation_id.x;
     let total = arrayLength(&input);
 
@@ -17,5 +20,5 @@ fn main(
     }
 
     // Copy
-    output[global_invocation_id.x] = input[global_invocation_id.x]
+    output[global_invocation_id.x] = input[global_invocation_id.x] * 2;
 }
