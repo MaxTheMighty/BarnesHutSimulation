@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-cgmath = "0.18.0"
+cgmath = { version = "0.18.0" }
 env_logger = "0.11.8"
 error-iter = "0.4"
 pixels = "0.15.0"
@@ -24,6 +24,7 @@ wasm-bindgen = "0.2.100"
 wasm-bindgen-futures = "0.4.50"
 deepsize = "0.2.0"
 bytemuck = { version = "1.16", features = [ "derive" ] }
+zerocopy = "0.8.31"
 
 
 [dependencies.image]
