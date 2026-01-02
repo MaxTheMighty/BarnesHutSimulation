@@ -1,6 +1,6 @@
 use std::sync::mpsc::channel;
 
-use barnes_hut::body::Body;
+use barnes_hut::body::{Body, BodyCollection};
 use wgpu::{
     util::{BufferInitDescriptor, DeviceExt},
     wgt::CommandEncoderDescriptor,
@@ -40,16 +40,16 @@ async fn main() {
                 },
                 count: None,
             },
-            BindGroupLayoutEntry {
-                binding: 2,
-                visibility: ShaderStages::COMPUTE,
-                ty: wgpu::BindingType::Buffer {
-                    ty: wgpu::BufferBindingType::Storage { read_only: false },
-                    has_dynamic_offset: false,
-                    min_binding_size: None,
-                },
-                count: None,
-            },
+            // BindGroupLayoutEntry {
+            //     binding: 2,
+            //     visibility: ShaderStages::COMPUTE,
+            //     ty: wgpu::BindingType::Buffer {
+            //         ty: wgpu::BufferBindingType::Storage { read_only: false },
+            //         has_dynamic_offset: false,
+            //         min_binding_size: None,
+            //     },
+            //     count: None,
+            // },
         ],
     });
 
@@ -69,24 +69,28 @@ async fn main() {
     });
 
     // If its not a multiple of 64, our rending gets messed up and we have slighly more thread executions than datapoints
-    let mut input_data: Vec<Body> = Vec::new();
-    for i in (0..128) {
-        input_data.push(Body::random(0.0, 20.0));
+    let mut input_data: BodyCollection = BodyCollection { 0: Vec::new() };
+    for i in (0..256) {
+        input_data.as_mut().push(Body::random(0.0, 20.0));
+    }
+
+    let mut input_data_bytes: Vec<u8> = Vec::new();
+    for body in input_data.as_ref() {
+        let mut bytes: Vec<u8> = body.into();
+        input_data_bytes.append(&mut bytes);
     }
 
     // Create the buffers that contain the data
     let input_buffer = device.create_buffer_init(&BufferInitDescriptor {
         label: Some("input buffer"),
-        contents: bytemuck::cast_slice(&input_data), // Cast data into [u8]
-        usage: wgpu::BufferUsages::COPY_DST
-            | wgpu::BufferUsages::STORAGE
-            | wgpu::BufferUsages::MAP_READ,
+        contents: bytemuck::cast_slice(&input_data_bytes), // Cast data into [u8]
+        usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
     });
 
     // Create the output buffer
     let output_buffer = device.create_buffer(&wgpu::BufferDescriptor {
         label: Some("output buffer"),
-        size: size_of::<u32>() as u64, // Since we're just copying the data
+        size: input_data_bytes.len() as u64, // Since we're just copying the data
         usage: wgpu::BufferUsages::COPY_SRC | wgpu::BufferUsages::STORAGE, //Depends on the modes set within the shader (var<storage,read_write>)
         mapped_at_creation: false,
     });
@@ -130,10 +134,10 @@ async fn main() {
                 binding: 1,
                 resource: output_buffer.as_entire_binding(),
             },
-            wgpu::BindGroupEntry {
-                binding: 2,
-                resource: debug_buffer.as_entire_binding(),
-            },
+            // wgpu::BindGroupEntry {
+            //     binding: 2,
+            //     resource: debug_buffer.as_entire_binding(),
+            // },
         ],
     });
 
@@ -141,13 +145,13 @@ async fn main() {
     let mut encoder = device.create_command_encoder(&CommandEncoderDescriptor { label: None });
     // Divide by 64 because that is the workgroup size
     // If we have N data points, and 64 workgroups, each group gets N/64 points
-    let num_dispatches = input_data.len().div_ceil(WORKGROUP_SIZE) as u32;
+    let num_dispatches = input_data.as_ref().len().div_ceil(WORKGROUP_SIZE) as u32;
     println!("Dispatching {num_dispatches} workgroups with {WORKGROUP_SIZE} threads each");
     println!(
         "Total threads: {:?}",
         num_dispatches * WORKGROUP_SIZE as u32
     );
-    if (num_dispatches as usize * WORKGROUP_SIZE > input_data.len()) {
+    if (num_dispatches as usize * WORKGROUP_SIZE > input_data.as_ref().len()) {
         eprintln!("!!! Warning: there are more threads than datapoints !!!");
     }
     // let formatted_str = format!("Expected: {:>width$}", expected, width = 12);
@@ -184,10 +188,28 @@ async fn main() {
 
     if let Ok(Ok(())) = data_receiver.recv() {
         let data = temp_slice.get_mapped_range();
-        let result: Vec<u32> = bytemuck::cast_slice(&data).to_vec();
+
+        let result: BodyCollection = (*data).into();
         drop(data);
-        let formatted_str = format!("Actual:   {:>width$}", result.first().unwrap(), width = 12);
-        println!("{}", formatted_str);
+        println!("Result bodies length {:?}", result.0.len());
+        // println!("First result body: \n\t {:?}", result.0.first().unwrap());
+        println!("Comparing bodies...");
+        for (result_body, expected_body) in result.as_ref().iter().zip(input_data.as_ref()) {
+            if result_body != expected_body {
+                println!("Bodies don't match!");
+                println!("Result:   {:?}", result_body);
+                println!("Expected: {:?}", expected_body);
+            }
+            // else {
+            //     println!("Bodies match!");
+            //     println!("Result:   {:?}", result_body);
+            //     println!("Expected: {:?}", expected_body);
+            // }
+            // println!("----------------------------");
+        }
+        // dbg!(result);
+        // let formatted_str = format!("Actual:   {:>width$}", result.first().unwrap(), width = 12);
+        // println!("{}", formatted_str);
         // Here were casting a &[u8] to a Vec<f32> but theres only one f32
         // Drop the data (mapped view) before we drop the buffer
 
