@@ -5,7 +5,7 @@ struct Body {
     velocity: vec2<f32>,
     force: vec2<f32>,
     mass: f32,
-    padding: f32 
+    padding: f32 // body must be aligned by a multiple of the largest variable, so 8 bytes in this case
 }
 const EPSILON: f32 = 1.0;
 const G: f32 = 1.00;
