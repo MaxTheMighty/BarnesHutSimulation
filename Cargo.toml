@@ -25,7 +25,7 @@ wasm-bindgen-futures = "0.4.50"
 deepsize = "0.2.0"
 bytemuck = { version = "1.16", features = [ "derive" ] }
 zerocopy = "0.8.31"
-
+glam = { version = "0.30.10", features = ["bytemuck"]}
 
 [dependencies.image]
 version = "0.24"

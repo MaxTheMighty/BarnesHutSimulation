@@ -1,5 +1,5 @@
 use crate::body::{self, Body};
-use cgmath::Vector2;
+use glam::f32::Vec2;
 
 const G: body::Float = 1.00;
 const DT: body::Float = 0.001;
@@ -10,7 +10,7 @@ pub fn calculate_force(bodies: &mut [Body]) {
     let d = bodies[0].pos - bodies[1].pos; //r21
     let d_mag = ((d.x * d.x) + (d.y * d.y) + EPSILON).sqrt();
     // let d_mag = d.magnitude(); // | r21 |
-    let force: Vector2<body::Float> = d * ((G * bodies[0].mass * bodies[1].mass) / (d_mag.powi(3)));
+    let force: Vec2 = d * ((G * bodies[0].mass * bodies[1].mass) / (d_mag.powi(3)));
     //TODO bring back the force vector to figure out the issue with DT
     bodies[0].force -= force;
     bodies[1].force += force;
@@ -19,7 +19,7 @@ pub fn calculate_force(bodies: &mut [Body]) {
 pub fn calculate_force_single(body_a: &mut Body, body_b: &mut Body) {
     let d = body_a.pos - body_b.pos; //r21
     let d_mag = ((d.x * d.x) + (d.y * d.y) + EPSILON).sqrt();
-    let force: Vector2<body::Float> = d * ((G * body_a.mass * body_b.mass) / (d_mag.powi(3)));
+    let force: Vec2 = d * ((G * body_a.mass * body_b.mass) / (d_mag.powi(3)));
     body_a.force -= force;
     body_b.force += force;
 }
@@ -28,14 +28,10 @@ pub fn calculate_force_single(body_a: &mut Body, body_b: &mut Body) {
 //to avoid having to allocate a new body when I want to calculate the force,
 //I can also just pass the center and mass fields to this function from a body
 //But this can be fixed later
-pub fn calculate_force_mass_center(
-    body_a: &mut Body,
-    center: Vector2<body::Float>,
-    mass: body::Float,
-) {
+pub fn calculate_force_mass_center(body_a: &mut Body, center: Vec2, mass: body::Float) {
     let d = body_a.pos - center; //r21
     let d_mag = ((d.x * d.x) + (d.y * d.y) + EPSILON).sqrt();
-    let force: Vector2<body::Float> = d * ((G * body_a.mass * mass) / (d_mag.powi(3)));
+    let force: Vec2 = d * ((G * body_a.mass * mass) / (d_mag.powi(3)));
     body_a.force -= force;
 }
 

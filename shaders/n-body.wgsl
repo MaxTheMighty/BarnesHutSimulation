@@ -3,8 +3,9 @@ struct Body {
     pos: vec2<f32>,
     acceleration: vec2<f32>,
     velocity: vec2<f32>,
+    force: vec2<f32>,
     mass: f32,
-    force: vec2<f32>
+    padding: f32 
 }
 const EPSILON: f32 = 1.0;
 const G: f32 = 1.00;
@@ -41,7 +42,10 @@ fn main(
     let start = chunk_size * global_invocation_index;
     let end = chunk_size * (global_invocation_index + 1);
 
-    bodies_out[global_invocation_index] = bodies[global_invocation_index];
+    var body: Body = bodies[global_invocation_index]; 
+    body.mass += 1.0f;
+
+    bodies_out[global_invocation_index] = body;
     // for (var current_body_index = start; current_body_index < end; current_body_index++) {
     //     // Calculate the force on ALL the bodies
     //     let current_body: Body = bodies[current_body_index];

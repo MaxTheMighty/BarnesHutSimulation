@@ -1,7 +1,7 @@
 use crate::body::Body;
 use crate::quadtree::{Quadtree, Rectangle};
 use crate::{body, gravity};
-use cgmath::{MetricSpace, Vector2};
+use glam::f32::Vec2;
 use rand_distr::{Distribution, Normal, StandardNormal};
 use std::ops::DerefMut;
 pub struct BarnesHutRunner {
@@ -35,7 +35,7 @@ impl BarnesHutRunner {
             for y in 0..length {
                 bodies.push(Body::with_mass_and_pos(
                     1.0,
-                    Vector2::new(x as body::Float + x_top_left, y as body::Float + y_top_left),
+                    Vec2::new(x as body::Float + x_top_left, y as body::Float + y_top_left),
                 ));
             }
         }
@@ -58,7 +58,7 @@ impl BarnesHutRunner {
                     + x_center;
                 y_pos = (radius - ring as f32 * f32::sin(i as f32 * std::f32::consts::PI / 180.0))
                     + y_center;
-                bodies.push(Body::with_mass_and_pos(1.0, Vector2::new(x_pos, y_pos)));
+                bodies.push(Body::with_mass_and_pos(1.0, Vec2::new(x_pos, y_pos)));
             }
         }
     }
@@ -89,7 +89,7 @@ impl BarnesHutRunner {
             let x = x_dist.sample(&mut rng).clamp(0.0, width);
             let y = y_dist.sample(&mut rng).clamp(0.0, height);
 
-            bodies.push(Body::with_mass_and_pos(body_mass, Vector2::new(x, y)));
+            bodies.push(Body::with_mass_and_pos(body_mass, Vec2::new(x, y)));
         }
     }
 
@@ -223,22 +223,22 @@ mod tests {
     use crate::bh_runner::BarnesHutRunner;
     use crate::body::{self, Body};
     use crate::quadtree::{Quadtree, Rectangle};
-    use cgmath::Vector2;
+    use glam::f32::Vec2;
 
     #[test]
     fn test_resize() {
         let rec: Rectangle = Rectangle::new(
-            Vector2::new(0.0f64 as body::Float, 0.0f64 as body::Float),
-            Vector2::new(100.0f64 as body::Float, 100.0f64 as body::Float),
+            Vec2::new(0.0f64 as body::Float, 0.0f64 as body::Float),
+            Vec2::new(100.0f64 as body::Float, 100.0f64 as body::Float),
         );
         let mut qt: Quadtree = Quadtree::new(rec, 1);
         let mut bodies: Vec<Body> = Vec::new();
         let mut runner: BarnesHutRunner = BarnesHutRunner::from_theta(0.5f64 as body::Float);
-        // runner.insert(Body::with_pos(Vector2::new(1.0,1.0)));
-        bodies.push(Body::with_pos(Vector2::new(110.0, 1.0)));
-        bodies.push(Body::with_pos(Vector2::new(1.0, 150.0)));
-        bodies.push(Body::with_pos(Vector2::new(-10.0, 120.0)));
-        bodies.push(Body::with_pos(Vector2::new(-10.0, -20.0)));
+        // runner.insert(Body::with_pos(Vec2::new(1.0,1.0)));
+        bodies.push(Body::with_pos(Vec2::new(110.0, 1.0)));
+        bodies.push(Body::with_pos(Vec2::new(1.0, 150.0)));
+        bodies.push(Body::with_pos(Vec2::new(-10.0, 120.0)));
+        bodies.push(Body::with_pos(Vec2::new(-10.0, -20.0)));
         runner.resize(&mut qt, &mut bodies);
         runner.create_tree(&mut qt, &mut bodies);
         assert_eq!(qt.boundaries.tl.x, -20.0);

@@ -1,5 +1,5 @@
 use crate::body::{self, Body};
-use cgmath::Vector2;
+use glam::f32::Vec2;
 
 const A: usize = 0;
 const B: usize = 1;
@@ -10,8 +10,8 @@ const MIN_SIZE: body::Float = 1.0;
 
 #[derive(PartialEq, Debug, Clone, Copy)]
 pub struct Rectangle {
-    pub tl: Vector2<body::Float>,
-    pub br: Vector2<body::Float>,
+    pub tl: Vec2,
+    pub br: Vec2,
 }
 #[derive(Debug)]
 pub struct Quadtree {
@@ -19,23 +19,23 @@ pub struct Quadtree {
     pub limit: usize,
     pub subtrees: Vec<Box<Quadtree>>,
     pub bodies: Vec<Body>,
-    pub center_of_mass: Option<Vector2<body::Float>>,
+    pub center_of_mass: Option<Vec2>,
     pub total_mass: body::Float,
 }
 
 impl Rectangle {
-    pub fn new(tl: Vector2<body::Float>, br: Vector2<body::Float>) -> Self {
+    pub fn new(tl: Vec2, br: Vec2) -> Self {
         Self { tl, br }
     }
-    pub fn within(&self, obj_pos: Vector2<body::Float>) -> bool {
+    pub fn within(&self, obj_pos: Vec2) -> bool {
         return obj_pos.x >= self.tl.x
             && obj_pos.x < self.br.x
             && obj_pos.y >= self.tl.y
             && obj_pos.y < self.br.y;
     }
 
-    pub fn midpoint(&self) -> Vector2<body::Float> {
-        return Vector2::new(
+    pub fn midpoint(&self) -> Vec2 {
+        return Vec2::new(
             self.tl.x + ((self.br.x - self.tl.x) / 2.0f32),
             self.tl.y + ((self.br.y - self.tl.y) / 2.0f32),
         );
@@ -50,11 +50,11 @@ impl Rectangle {
     }
 
     pub fn subranges(&self) -> (Rectangle, Rectangle, Rectangle, Rectangle) {
-        let midpoint: Vector2<body::Float> = self.midpoint();
-        let subrect_b_tl = Vector2::new(midpoint.x, self.tl.y);
-        let subrect_b_br = Vector2::new(self.br.x, midpoint.y);
-        let subrect_c_tl = Vector2::new(self.tl.x, midpoint.y);
-        let subrect_c_br = Vector2::new(midpoint.x, self.br.y);
+        let midpoint: Vec2 = self.midpoint();
+        let subrect_b_tl = Vec2::new(midpoint.x, self.tl.y);
+        let subrect_b_br = Vec2::new(self.br.x, midpoint.y);
+        let subrect_c_tl = Vec2::new(self.tl.x, midpoint.y);
+        let subrect_c_br = Vec2::new(midpoint.x, self.br.y);
 
         let subrect_a = Rectangle::new(self.tl, midpoint);
         let subrect_b = Rectangle::new(subrect_b_tl, subrect_b_br);
@@ -160,7 +160,7 @@ impl Quadtree {
         match self.center_of_mass {
             Some(_) => {}
             None => {
-                self.center_of_mass = Some(Vector2::new(0.0, 0.0));
+                self.center_of_mass = Some(Vec2::new(0.0, 0.0));
             }
         }
 
@@ -199,7 +199,7 @@ impl Quadtree {
         match self.center_of_mass {
             Some(_) => {}
             None => {
-                self.center_of_mass = Some(Vector2::new(0.0, 0.0));
+                self.center_of_mass = Some(Vec2::new(0.0, 0.0));
             }
         }
         for subtree in &self.subtrees {
@@ -234,19 +234,19 @@ impl Quadtree {
 
     pub fn center_between_two_points(
         &self,
-        pos_a: Vector2<body::Float>,
+        pos_a: Vec2,
         mass_a: body::Float,
-        pos_b: Vector2<body::Float>,
+        pos_b: Vec2,
         mass_b: body::Float,
-    ) -> Vector2<body::Float> {
+    ) -> Vec2 {
         let sum_mass: body::Float = mass_a + mass_b;
-        let center: Vector2<body::Float> = ((pos_a * mass_a) + (pos_b * mass_b)) / sum_mass;
+        let center: Vec2 = ((pos_a * mass_a) + (pos_b * mass_b)) / sum_mass;
         // print!("{:?}",center);
 
         return center;
     }
 
-    pub fn subtree_index(&self, pos: Vector2<body::Float>) -> Option<usize> {
+    pub fn subtree_index(&self, pos: Vec2) -> Option<usize> {
         if self.subtrees.len() == 0 {
             return None;
         }
@@ -276,25 +276,19 @@ impl Quadtree {
 
 #[cfg(test)]
 mod tests {
-    use crate::body::{self, Body};
+    use crate::body::Body;
     use crate::quadtree::Quadtree;
     use crate::quadtree::{Rectangle, A, D};
-    use cgmath::Vector2;
+    use glam::f32::Vec2;
     #[test]
     fn test_within() {
-        let pos: Vector2<body::Float> = Vector2::new(100.0, 100.0);
-        let rec: Rectangle = Rectangle::new(
-            Vector2::new(50.0f32, 50.0f32),
-            Vector2::new(150.0f32, 150.0f32),
-        );
-        let rec2: Rectangle = Rectangle::new(
-            Vector2::new(99.0f32, 99.0f32),
-            Vector2::new(101.0f32, 101.0f32),
-        );
-        let rec3: Rectangle = Rectangle::new(
-            Vector2::new(100.0f32, 100.0f32),
-            Vector2::new(101.0f32, 101.0f32),
-        );
+        let pos: Vec2 = Vec2::new(100.0, 100.0);
+        let rec: Rectangle =
+            Rectangle::new(Vec2::new(50.0f32, 50.0f32), Vec2::new(150.0f32, 150.0f32));
+        let rec2: Rectangle =
+            Rectangle::new(Vec2::new(99.0f32, 99.0f32), Vec2::new(101.0f32, 101.0f32));
+        let rec3: Rectangle =
+            Rectangle::new(Vec2::new(100.0f32, 100.0f32), Vec2::new(101.0f32, 101.0f32));
         assert!(rec.within(pos));
         assert!(rec2.within(pos));
         assert!(rec3.within(pos));
@@ -302,21 +296,15 @@ mod tests {
 
     #[test]
     fn test_not_within() {
-        let pos: Vector2<body::Float> = Vector2::new(100.0, 100.0);
-        let rec: Rectangle = Rectangle::new(
-            Vector2::new(200.0f32, 200.0f32),
-            Vector2::new(400.0f32, 400.0f32),
-        );
-        let rec2: Rectangle = Rectangle::new(
-            Vector2::new(50.0f32, 200.0f32),
-            Vector2::new(150.0f32, 400.0f32),
-        );
-        let rec3: Rectangle = Rectangle::new(
-            Vector2::new(50.0f32, 50.0f32),
-            Vector2::new(150.0f32, 65.0f32),
-        );
+        let pos: Vec2 = Vec2::new(100.0, 100.0);
+        let rec: Rectangle =
+            Rectangle::new(Vec2::new(200.0f32, 200.0f32), Vec2::new(400.0f32, 400.0f32));
+        let rec2: Rectangle =
+            Rectangle::new(Vec2::new(50.0f32, 200.0f32), Vec2::new(150.0f32, 400.0f32));
+        let rec3: Rectangle =
+            Rectangle::new(Vec2::new(50.0f32, 50.0f32), Vec2::new(150.0f32, 65.0f32));
         let rec4: Rectangle =
-            Rectangle::new(Vector2::new(0.0f32, 0.0f32), Vector2::new(50.0f32, 50.0f32));
+            Rectangle::new(Vec2::new(0.0f32, 0.0f32), Vec2::new(50.0f32, 50.0f32));
         assert_eq!(rec.within(pos), false);
         assert_eq!(rec2.within(pos), false);
         assert_eq!(rec3.within(pos), false);
@@ -325,49 +313,29 @@ mod tests {
 
     #[test]
     fn rectangle_midpoint() {
-        let rec: Rectangle = Rectangle::new(
-            Vector2::new(200.0f32, 200.0f32),
-            Vector2::new(400.0f32, 400.0f32),
-        );
-        let rec2: Rectangle = Rectangle::new(
-            Vector2::new(50.0f32, 200.0f32),
-            Vector2::new(150.0f32, 400.0f32),
-        );
-        let rec3: Rectangle = Rectangle::new(
-            Vector2::new(50.0f32, 50.0f32),
-            Vector2::new(150.0f32, 65.0f32),
-        );
+        let rec: Rectangle =
+            Rectangle::new(Vec2::new(200.0f32, 200.0f32), Vec2::new(400.0f32, 400.0f32));
+        let rec2: Rectangle =
+            Rectangle::new(Vec2::new(50.0f32, 200.0f32), Vec2::new(150.0f32, 400.0f32));
+        let rec3: Rectangle =
+            Rectangle::new(Vec2::new(50.0f32, 50.0f32), Vec2::new(150.0f32, 65.0f32));
         let rec4: Rectangle =
-            Rectangle::new(Vector2::new(0.0f32, 0.0f32), Vector2::new(50.0f32, 50.0f32));
-        assert_eq!(rec.midpoint(), Vector2::new(300.0f32, 300.0f32));
-        assert_eq!(rec2.midpoint(), Vector2::new(100.0f32, 300.0f32));
-        assert_eq!(rec3.midpoint(), Vector2::new(100.0f32, 57.50f32));
-        assert_eq!(rec4.midpoint(), Vector2::new(25.0f32, 25.0f32));
+            Rectangle::new(Vec2::new(0.0f32, 0.0f32), Vec2::new(50.0f32, 50.0f32));
+        assert_eq!(rec.midpoint(), Vec2::new(300.0f32, 300.0f32));
+        assert_eq!(rec2.midpoint(), Vec2::new(100.0f32, 300.0f32));
+        assert_eq!(rec3.midpoint(), Vec2::new(100.0f32, 57.50f32));
+        assert_eq!(rec4.midpoint(), Vec2::new(25.0f32, 25.0f32));
     }
 
     #[test]
     fn rectangle_subranges() {
-        let rec: Rectangle = Rectangle::new(
-            Vector2::new(200.0f32, 200.0f32),
-            Vector2::new(400.0f32, 400.0f32),
-        );
+        let rec: Rectangle =
+            Rectangle::new(Vec2::new(200.0f32, 200.0f32), Vec2::new(400.0f32, 400.0f32));
         let expected_sub: (Rectangle, Rectangle, Rectangle, Rectangle) = (
-            Rectangle::new(
-                Vector2::new(200.0f32, 200.0f32),
-                Vector2::new(300.0f32, 300.0f32),
-            ),
-            Rectangle::new(
-                Vector2::new(300.0f32, 200.0f32),
-                Vector2::new(400.0f32, 300.0f32),
-            ),
-            Rectangle::new(
-                Vector2::new(200.0f32, 300.0f32),
-                Vector2::new(300.0f32, 400.0f32),
-            ),
-            Rectangle::new(
-                Vector2::new(300.0f32, 300.0f32),
-                Vector2::new(400.0f32, 400.0f32),
-            ),
+            Rectangle::new(Vec2::new(200.0f32, 200.0f32), Vec2::new(300.0f32, 300.0f32)),
+            Rectangle::new(Vec2::new(300.0f32, 200.0f32), Vec2::new(400.0f32, 300.0f32)),
+            Rectangle::new(Vec2::new(200.0f32, 300.0f32), Vec2::new(300.0f32, 400.0f32)),
+            Rectangle::new(Vec2::new(300.0f32, 300.0f32), Vec2::new(400.0f32, 400.0f32)),
         );
         let actual_sub = rec.subranges();
         assert_eq!(expected_sub.0, actual_sub.0);
@@ -378,13 +346,11 @@ mod tests {
 
     #[test]
     fn subtree_index() {
-        let rec: Rectangle = Rectangle::new(
-            Vector2::new(200.0f32, 200.0f32),
-            Vector2::new(400.0f32, 400.0f32),
-        );
+        let rec: Rectangle =
+            Rectangle::new(Vec2::new(200.0f32, 200.0f32), Vec2::new(400.0f32, 400.0f32));
         let mut qt: Quadtree = Quadtree::new(rec, 5);
-        let p1: Vector2<f32> = Vector2::new(303.0f32, 350.0f32);
-        let p2: Vector2<f32> = Vector2::new(203.0f32, 250.0f32);
+        let p1: Vec2 = Vec2::new(303.0f32, 350.0f32);
+        let p2: Vec2 = Vec2::new(203.0f32, 250.0f32);
         qt.split();
         // println!("{:?}",qt.subtree_index(p1));
         assert_eq!(qt.subtree_index(p1).unwrap_or_default(), D);
@@ -393,10 +359,8 @@ mod tests {
 
     #[test]
     fn split() {
-        let rec: Rectangle = Rectangle::new(
-            Vector2::new(200.0f32, 200.0f32),
-            Vector2::new(400.0f32, 400.0f32),
-        );
+        let rec: Rectangle =
+            Rectangle::new(Vec2::new(200.0f32, 200.0f32), Vec2::new(400.0f32, 400.0f32));
         let mut qt: Quadtree = Quadtree::new(rec, 5);
         qt.split();
         assert_eq!(qt.subtrees.len(), 4);
@@ -404,30 +368,26 @@ mod tests {
 
     #[test]
     fn insert() {
-        let rec: Rectangle = Rectangle::new(
-            Vector2::new(200.0f32, 200.0f32),
-            Vector2::new(400.0f32, 400.0f32),
-        );
+        let rec: Rectangle =
+            Rectangle::new(Vec2::new(200.0f32, 200.0f32), Vec2::new(400.0f32, 400.0f32));
         let mut qt: Quadtree = Quadtree::new(rec, 1);
-        let body: Body = Body::with_pos(Vector2::new(250.0, 250.0));
-        let body2: Body = Body::with_pos(Vector2::new(210.0, 230.0));
+        let body: Body = Body::with_pos(Vec2::new(250.0, 250.0));
+        let body2: Body = Body::with_pos(Vec2::new(210.0, 230.0));
         qt.insert(body);
         qt.insert(body2);
         assert_eq!(qt.subtrees.len(), 4);
     }
     #[test]
     fn center_node_mass() {
-        let rec: Rectangle = Rectangle::new(
-            Vector2::new(0.0f32, 0.0f32),
-            Vector2::new(400.0f32, 400.0f32),
-        );
+        let rec: Rectangle =
+            Rectangle::new(Vec2::new(0.0f32, 0.0f32), Vec2::new(400.0f32, 400.0f32));
         let mut qt: Quadtree = Quadtree::new(rec, 1);
-        qt.insert(Body::with_pos(Vector2::new(1.0, 1.0)));
-        qt.insert(Body::with_pos(Vector2::new(10.0, 10.0)));
-        qt.insert(Body::with_pos(Vector2::new(100.0, 20.0)));
+        qt.insert(Body::with_pos(Vec2::new(1.0, 1.0)));
+        qt.insert(Body::with_pos(Vec2::new(10.0, 10.0)));
+        qt.insert(Body::with_pos(Vec2::new(100.0, 20.0)));
         assert_eq!(qt.subtrees.len(), 4);
-        assert_eq!(qt.subtrees[A].boundaries.br, Vector2::new(200.0, 200.0));
-        qt.insert(Body::with_pos(Vector2::new(120.0, 120.0)));
+        assert_eq!(qt.subtrees[A].boundaries.br, Vec2::new(200.0, 200.0));
+        qt.insert(Body::with_pos(Vec2::new(120.0, 120.0)));
         assert_eq!(qt.subtrees[A].subtrees.len(), 4);
         assert_eq!(qt.subtrees[A].subtrees[A].subtrees.len(), 4);
         qt.subtrees[A].update_mass();
@@ -436,16 +396,14 @@ mod tests {
     }
     #[test]
     fn center_mass() {
-        let rec: Rectangle = Rectangle::new(
-            Vector2::new(0.0f32, 0.0f32),
-            Vector2::new(400.0f32, 400.0f32),
-        );
+        let rec: Rectangle =
+            Rectangle::new(Vec2::new(0.0f32, 0.0f32), Vec2::new(400.0f32, 400.0f32));
         let mut qt: Quadtree = Quadtree::new(rec, 1);
-        let body: Body = Body::with_pos(Vector2::new(250.0, 250.0));
-        let body2: Body = Body::with_pos(Vector2::new(210.0, 230.0));
-        let body3: Body = Body::with_pos(Vector2::new(0.0, 0.0));
-        let body4: Body = Body::with_pos(Vector2::new(1.0, 1.0));
-        // let body5: Body = Body::with_pos(Vector2::new(205.0,205.0));
+        let body: Body = Body::with_pos(Vec2::new(250.0, 250.0));
+        let body2: Body = Body::with_pos(Vec2::new(210.0, 230.0));
+        let body3: Body = Body::with_pos(Vec2::new(0.0, 0.0));
+        let body4: Body = Body::with_pos(Vec2::new(1.0, 1.0));
+        // let body5: Body = Body::with_pos(Vec2::new(205.0,205.0));
         qt.insert(body);
         // qt.update_mass();
         qt.insert(body2);
@@ -459,18 +417,16 @@ mod tests {
     }
     #[test]
     fn center_mass_two() {
-        let rec: Rectangle = Rectangle::new(
-            Vector2::new(0.0f32, 0.0f32),
-            Vector2::new(400.0f32, 400.0f32),
-        );
+        let rec: Rectangle =
+            Rectangle::new(Vec2::new(0.0f32, 0.0f32), Vec2::new(400.0f32, 400.0f32));
         let mut qt: Quadtree = Quadtree::new(rec, 1);
         qt.bodies = Vec::new();
         qt.subtrees = Vec::new();
-        let body5: Body = Body::with_pos(Vector2::new(1.0, 1.0));
-        let body6: Body = Body::with_pos(Vector2::new(2.0, 2.0));
-        let body7: Body = Body::with_pos(Vector2::new(3.0, 3.0));
-        let body8: Body = Body::with_pos(Vector2::new(4.0, 4.0));
-        let body9: Body = Body::with_pos(Vector2::new(100.0, 100.0));
+        let body5: Body = Body::with_pos(Vec2::new(1.0, 1.0));
+        let body6: Body = Body::with_pos(Vec2::new(2.0, 2.0));
+        let body7: Body = Body::with_pos(Vec2::new(3.0, 3.0));
+        let body8: Body = Body::with_pos(Vec2::new(4.0, 4.0));
+        let body9: Body = Body::with_pos(Vec2::new(100.0, 100.0));
 
         qt.insert(body5);
         qt.insert(body6);
@@ -485,35 +441,27 @@ mod tests {
 
     #[test]
     fn rectangle_mid() {
-        let rec: Rectangle = Rectangle::new(
-            Vector2::new(0.0f32, 0.0f32),
-            Vector2::new(400.0f32, 400.0f32),
-        );
+        let rec: Rectangle =
+            Rectangle::new(Vec2::new(0.0f32, 0.0f32), Vec2::new(400.0f32, 400.0f32));
         assert_eq!(rec.width(), 400.0f32);
         assert_eq!(rec.height(), 400.0f32);
-        let rec: Rectangle = Rectangle::new(
-            Vector2::new(200.0f32, 200.0f32),
-            Vector2::new(400.0f32, 400.0f32),
-        );
+        let rec: Rectangle =
+            Rectangle::new(Vec2::new(200.0f32, 200.0f32), Vec2::new(400.0f32, 400.0f32));
         assert_eq!(rec.width(), 200.0f32);
         assert_eq!(rec.height(), 200.0f32);
-        let rec: Rectangle = Rectangle::new(
-            Vector2::new(32.0f32, 98.0f32),
-            Vector2::new(101.0f32, 255.0f32),
-        );
+        let rec: Rectangle =
+            Rectangle::new(Vec2::new(32.0f32, 98.0f32), Vec2::new(101.0f32, 255.0f32));
         assert_eq!(rec.width(), 69.0f32);
         assert_eq!(rec.height(), 157.0f32);
     }
 
     #[test]
     fn clear_quadtree() {
-        let rec: Rectangle = Rectangle::new(
-            Vector2::new(0.0f32, 0.0f32),
-            Vector2::new(400.0f32, 400.0f32),
-        );
+        let rec: Rectangle =
+            Rectangle::new(Vec2::new(0.0f32, 0.0f32), Vec2::new(400.0f32, 400.0f32));
         let mut qt: Quadtree = Quadtree::new(rec, 1);
-        let body3: Body = Body::with_pos(Vector2::new(0.0, 0.0));
-        let body4: Body = Body::with_pos(Vector2::new(150.0, 150.0));
+        let body3: Body = Body::with_pos(Vec2::new(0.0, 0.0));
+        let body4: Body = Body::with_pos(Vec2::new(150.0, 150.0));
         qt.insert(body3);
         qt.insert(body4);
         println!("{:?}", qt.subtrees);
@@ -526,8 +474,8 @@ mod tests {
     #[test]
     fn test_non_positive_boundaries() {
         let rec: Rectangle = Rectangle::new(
-            Vector2::new(-100.0f32, -100.0f32),
-            Vector2::new(100.0f32, 100.0f32),
+            Vec2::new(-100.0f32, -100.0f32),
+            Vec2::new(100.0f32, 100.0f32),
         );
         let mut qt: Quadtree = Quadtree::new(rec, 1);
         qt.split();

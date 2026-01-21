@@ -1,7 +1,6 @@
-use cgmath::Vector2;
-
 use crate::body::{self, Body};
 use crate::gravity;
+use glam::f32::Vec2;
 
 #[derive(Debug)]
 pub struct Simulation {
@@ -24,7 +23,7 @@ impl Simulation {
             for y in 0..length {
                 self.bodies.push(Body::with_mass_and_pos(
                     1.0,
-                    Vector2::new(x as body::Float + top_left, y as body::Float + top_left),
+                    Vec2::new(x as body::Float + top_left, y as body::Float + top_left),
                 ));
             }
         }
@@ -34,7 +33,7 @@ impl Simulation {
     //     let mut body: Body;
     //     for _ in 0..count{
     //         body = Body::new();
-    //         body.pos = Vector2::new(fastrand::f64()*length + top_left, fastrand::f64()*width + top_left);
+    //         body.pos = Vec2::new(fastrand::f64()*length + top_left, fastrand::f64()*width + top_left);
     //         body.mass = 1.0;
     //         self.bodies.push(body);
     //     }

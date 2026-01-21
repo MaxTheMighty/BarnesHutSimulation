@@ -2,10 +2,9 @@ use barnes_hut::bh_runner::BarnesHutRunner;
 use barnes_hut::body::{self, Body};
 use barnes_hut::canvas::Canvas;
 use barnes_hut::quadtree::{Quadtree, Rectangle};
-use cgmath::Vector2;
+use glam::f32::Vec2;
 use hsv::hsv_to_rgb;
 use image::{ImageBuffer, Rgb};
-use std::error::Error;
 
 fn main() -> Result<(), image::ImageError> {
     let width = 2000;
@@ -14,8 +13,8 @@ fn main() -> Result<(), image::ImageError> {
     // let mut img = ImageBuffer::new(width, height);
 
     let rec: Rectangle = Rectangle::new(
-        Vector2::new(0.0, 0.0),
-        Vector2::new(width as body::Float, height as body::Float),
+        Vec2::new(0.0, 0.0),
+        Vec2::new(width as body::Float, height as body::Float),
     );
     let mut qt: Quadtree = Quadtree::new(rec, 1);
     let mut bodies: Vec<Body> = Vec::new();
