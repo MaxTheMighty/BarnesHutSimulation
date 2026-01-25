@@ -62,7 +62,7 @@ impl ComputePipeline {
     }
 
     // We might not need to do this?
-    fn setup_bind_groups(&mut self, layout_entries: &[BindGroupEntry]) -> Result<()> {
+    pub fn setup_bind_groups(&mut self) -> Result<()> {
         if self.input_buffers.is_none() && self.output_buffers.is_none() {
             return Err(ComputePipelineError::NotInitialized(
                 "Input or output buffers".to_string(),
@@ -73,10 +73,35 @@ impl ComputePipeline {
             return Err(ComputePipelineError::NotInitialized("Pipeline".to_string()));
         }
 
+        // Bind group layouts:
+        // all the inputs are bound 0 to J
+        // all the outputs are bound J+1 to N
+
+        let mut bind_group_entries: Vec<BindGroupEntry> = Vec::new();
+        let mut index: u32 = 0;
+        // Safety: We already checked at the start of the function if input is some
+        for input in self.input_buffers.as_ref().unwrap() {
+            let entry = BindGroupEntry {
+                binding: index,
+                resource: input.as_entire_binding(),
+            };
+            bind_group_entries.push(entry);
+            index += 1;
+        }
+
+        for output in self.output_buffers.as_ref().unwrap() {
+            let entry = BindGroupEntry {
+                binding: index,
+                resource: output.as_entire_binding(),
+            };
+            bind_group_entries.push(entry);
+            index += 1;
+        }
+
         let bind_group_descriptor = BindGroupDescriptor {
             label: Some("Compute pipeline bind group"),
             layout: &(self.pipeline.as_ref().unwrap().get_bind_group_layout(0)),
-            entries: layout_entries,
+            entries: &bind_group_entries,
         };
 
         let bind_group = self.device.create_bind_group(&bind_group_descriptor);
@@ -185,6 +210,7 @@ impl ComputePipeline {
             && self.input_buffers.is_some()
             && self.output_buffers.is_some()
             && self.encoder.is_some()
+            && self.bind_group.is_some()
     }
 
     pub fn execute_single_pass(&mut self, dispatch_count: u32) -> Result<()> {
@@ -193,7 +219,7 @@ impl ComputePipeline {
 
         if !self.ready_to_compute() {
             return Err(ComputePipelineError::NotReady(
-                "not ready to compute".to_string(),
+                "Not ready to compute".to_string(),
             ));
         }
         // Closure for ownership
