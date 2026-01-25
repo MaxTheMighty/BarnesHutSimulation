@@ -26,6 +26,7 @@ deepsize = "0.2.0"
 bytemuck = { version = "1.16", features = [ "derive" ] }
 zerocopy = "0.8.31"
 glam = { version = "0.30.10", features = ["bytemuck"]}
+thiserror = { version = "2.0.18"}
 
 [dependencies.image]
 version = "0.24"
@@ -34,6 +35,7 @@ features = ["png","jpeg"]
 
 [dev-dependencies]
 criterion = { version = "0.4", features = ["html_reports"] }
+tokio = { version = "1.49.0", features=["full"]}
 
 [profile.release]
 #strip = true        # Strip symbols from binary*
