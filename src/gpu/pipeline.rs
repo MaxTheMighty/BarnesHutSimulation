@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use thiserror::Error;
 use wgpu::{
     util::{BufferInitDescriptor, DeviceExt},
@@ -13,25 +15,251 @@ pub enum ComputePipelineError {
     #[error("Could not request device")]
     RequestDevice(#[from] wgpu::RequestDeviceError),
     #[error("Field not initialized {0}")]
-    NotInitialized(String),
+    NotInitialized(ComputePipelineStage),
     #[error("Not ready to run operation {0}")]
     NotReady(String),
 }
 
+#[derive(Debug)]
+pub enum ComputePipelineStage {
+    Shader,
+    BindgroupLayout,
+    InputBuffer,
+    OutputBuffer,
+}
+
+impl Display for ComputePipelineStage {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ComputePipelineStage::Shader => {
+                write!(f, "Shader")
+            }
+            ComputePipelineStage::BindgroupLayout => {
+                write!(f, "Bindgroup layout")
+            }
+            ComputePipelineStage::InputBuffer => {
+                write!(f, "Input buffer")
+            }
+            ComputePipelineStage::OutputBuffer => {
+                write!(f, "Output buffer")
+            }
+        }
+    }
+}
+
 pub type Result<T> = std::result::Result<T, ComputePipelineError>;
+pub struct New;
+pub struct Shader;
+pub struct InputData;
+
+pub struct OutputData;
+pub struct Pipeline;
+pub struct Bindgroup;
+
+pub struct Encoder;
+pub struct Complete;
+
+pub struct ComputePipelineBuilder<State = New> {
+    pub state: State,
+    pub pipeline: ComputePipeline,
+}
+
+impl ComputePipelineBuilder<New> {
+    pub async fn new() -> Result<ComputePipelineBuilder<Shader>> {
+        Ok(ComputePipelineBuilder {
+            state: Shader,
+            pipeline: ComputePipeline::new().await?,
+        })
+    }
+}
+
+impl ComputePipelineBuilder<Shader> {
+    pub fn build_shader(
+        mut self,
+        shader: ShaderModule,
+    ) -> Result<ComputePipelineBuilder<InputData>> {
+        self.pipeline.shader = Some(shader);
+        return Ok(ComputePipelineBuilder {
+            state: InputData,
+            pipeline: self.pipeline,
+        });
+    }
+}
+
+impl ComputePipelineBuilder<InputData> {
+    pub fn append_input_data<T: AsRef<[u8]>>(
+        &mut self,
+        input_data: T,
+        usage: BufferUsages,
+    ) -> Result<()> {
+        //        self.pipeline.setup_input_data(input_data, usage)
+        let descriptor = BufferInitDescriptor {
+            label: Some("Input buffer"),
+            contents: input_data.as_ref(),
+            usage: usage,
+        };
+        let input_buffer = self.pipeline.device.create_buffer_init(&descriptor);
+        match self.pipeline.input_buffers {
+            Some(ref mut buffers) => buffers.push(input_buffer),
+            None => {
+                self.pipeline.input_buffers = Some(vec![input_buffer]);
+            }
+        }
+
+        return Ok(());
+    }
+
+    pub fn done(self) -> Result<ComputePipelineBuilder<OutputData>> {
+        return Ok(ComputePipelineBuilder {
+            state: OutputData,
+            pipeline: self.pipeline,
+        });
+    }
+}
+
+impl ComputePipelineBuilder<OutputData> {
+    pub fn append_output_data<T: AsRef<[u8]>>(
+        &mut self,
+        output_data: T,
+        usage: BufferUsages,
+    ) -> Result<()> {
+        let descriptor = BufferInitDescriptor {
+            label: Some("Output buffer"),
+            contents: output_data.as_ref(),
+            usage: usage,
+        };
+        let output_buffer = self.pipeline.device.create_buffer_init(&descriptor);
+        match self.pipeline.output_buffers {
+            Some(ref mut buffers) => buffers.push(output_buffer),
+            None => {
+                self.pipeline.output_buffers = Some(vec![output_buffer]);
+            }
+        }
+
+        return Ok(());
+    }
+
+    pub fn done(self) -> Result<ComputePipelineBuilder<Pipeline>> {
+        return Ok(ComputePipelineBuilder {
+            state: Pipeline,
+            pipeline: self.pipeline,
+        });
+    }
+}
+
+impl ComputePipelineBuilder<Pipeline> {
+    pub fn build_pipeline(
+        mut self,
+        _push_constant_ranges: &[PushConstantRange],
+    ) -> Result<ComputePipelineBuilder<Bindgroup>> {
+        let compute_pipeline_descriptor =
+            wgpu::ComputePipelineDescriptor {
+                label: Some("Compute pipeline"),
+                layout: self.pipeline.pipeline_layout.as_ref(),
+                module: self.pipeline.shader.as_ref().ok_or(
+                    ComputePipelineError::NotInitialized(ComputePipelineStage::Shader),
+                )?,
+                entry_point: None,
+                compilation_options: Default::default(),
+                cache: Default::default(),
+            };
+
+        let compute_pipeline = self
+            .pipeline
+            .device
+            .create_compute_pipeline(&compute_pipeline_descriptor);
+        self.pipeline.pipeline = Some(compute_pipeline);
+
+        return Ok(ComputePipelineBuilder {
+            state: Bindgroup,
+            pipeline: self.pipeline,
+        });
+    }
+}
+
+impl ComputePipelineBuilder<Bindgroup> {
+    pub fn build_bindgroup(mut self) -> Result<ComputePipelineBuilder<Encoder>> {
+        let mut bind_group_entries: Vec<BindGroupEntry> = Vec::new();
+        let mut index: u32 = 0;
+        // Safety: We already checked at the start of the function if input is some
+        for input in self.pipeline.input_buffers.as_ref().unwrap() {
+            let entry = BindGroupEntry {
+                binding: index,
+                resource: input.as_entire_binding(),
+            };
+            bind_group_entries.push(entry);
+            index += 1;
+        }
+
+        for output in self.pipeline.output_buffers.as_ref().unwrap() {
+            let entry = BindGroupEntry {
+                binding: index,
+                resource: output.as_entire_binding(),
+            };
+            bind_group_entries.push(entry);
+            index += 1;
+        }
+
+        let bind_group_descriptor = BindGroupDescriptor {
+            label: Some("Compute pipeline bind group"),
+            layout: &(self
+                .pipeline
+                .pipeline
+                .as_ref()
+                .unwrap()
+                .get_bind_group_layout(0)),
+            entries: &bind_group_entries,
+        };
+
+        let bind_group = self
+            .pipeline
+            .device
+            .create_bind_group(&bind_group_descriptor);
+
+        self.pipeline.bind_group = Some(bind_group);
+
+        return Ok(ComputePipelineBuilder {
+            state: Encoder,
+            pipeline: self.pipeline,
+        });
+    }
+}
+
+impl ComputePipelineBuilder<Encoder> {
+    pub fn setup_encoder(mut self) -> Result<ComputePipelineBuilder<Complete>> {
+        let command_encoder_descriptor = &CommandEncoderDescriptor {
+            label: Some("Compute pipeline command encoder "),
+        };
+        let encoder = self
+            .pipeline
+            .device
+            .create_command_encoder(command_encoder_descriptor);
+        self.pipeline.encoder = Some(encoder);
+        return Ok(ComputePipelineBuilder {
+            state: Complete,
+            pipeline: self.pipeline,
+        });
+    }
+}
+
+impl ComputePipelineBuilder<Complete> {
+    pub fn finalize(self) -> Result<ComputePipeline> {
+        return Ok(self.pipeline);
+    }
+}
 pub struct ComputePipeline {
-    instance: Instance,
-    adapter: Adapter,
+    pub instance: Instance,
+    pub adapter: Adapter,
     pub device: Device,
-    queue: Queue,
-    shader: Option<ShaderModule>,
-    bind_group_layout: Option<BindGroupLayout>,
-    bind_group: Option<BindGroup>,
-    pipeline_layout: Option<PipelineLayout>,
-    pipeline: Option<wgpu::ComputePipeline>,
-    input_buffers: Option<Vec<Buffer>>,
-    output_buffers: Option<Vec<Buffer>>,
-    encoder: Option<CommandEncoder>,
+    pub queue: Queue,
+    pub shader: Option<ShaderModule>,
+    pub bind_group_layout: Option<BindGroupLayout>,
+    pub bind_group: Option<BindGroup>,
+    pub pipeline_layout: Option<PipelineLayout>,
+    pub pipeline: Option<wgpu::ComputePipeline>,
+    pub input_buffers: Option<Vec<Buffer>>,
+    pub output_buffers: Option<Vec<Buffer>>,
+    pub encoder: Option<CommandEncoder>,
 }
 
 impl ComputePipeline {
@@ -63,15 +291,15 @@ impl ComputePipeline {
 
     // We might not need to do this?
     pub fn setup_bind_groups(&mut self) -> Result<()> {
-        if self.input_buffers.is_none() && self.output_buffers.is_none() {
-            return Err(ComputePipelineError::NotInitialized(
-                "Input or output buffers".to_string(),
-            ));
-        }
+        // if self.input_buffers.is_none() && self.output_buffers.is_none() {
+        //     return Err(ComputePipelineError::NotInitialized(
+        //         "Input or output buffers".to_string(),
+        //     ));
+        // }
 
-        if self.pipeline.is_none() {
-            return Err(ComputePipelineError::NotInitialized("Pipeline".to_string()));
-        }
+        // if self.pipeline.is_none() {
+        //     return Err(ComputePipelineError::NotInitialized("Pipeline".to_string()));
+        // }
 
         // Bind group layouts:
         // all the inputs are bound 0 to J
@@ -116,7 +344,7 @@ impl ComputePipeline {
                 .bind_group_layout
                 .clone()
                 .ok_or(ComputePipelineError::NotInitialized(
-                    "Bind group layout".to_string(),
+                    ComputePipelineStage::BindgroupLayout,
                 ))?];
 
         let pipeline_layout_descriptor = &PipelineLayoutDescriptor {
@@ -140,7 +368,9 @@ impl ComputePipeline {
             module: self
                 .shader
                 .as_ref()
-                .ok_or(ComputePipelineError::NotInitialized("Shader".to_string()))?,
+                .ok_or(ComputePipelineError::NotInitialized(
+                    ComputePipelineStage::Shader,
+                ))?,
             entry_point: None,
             compilation_options: Default::default(),
             cache: Default::default(),
@@ -223,12 +453,10 @@ impl ComputePipeline {
             ));
         }
         // Closure for ownership
-        let encoder: &mut CommandEncoder =
-            self.encoder
-                .as_mut()
-                .ok_or(ComputePipelineError::NotInitialized(
-                    "Encoder for executing pass".to_string(),
-                ))?;
+        let encoder: &mut CommandEncoder = self.encoder.as_mut().unwrap();
+        // .ok_or(ComputePipelineError::NotInitialized(
+        //     "Encoder for executing pass".to_string(),
+        // ))?;
         {
             let mut pass = encoder.begin_compute_pass(&Default::default());
             // Safety: we already checked ready_to_compute so we can safely unwrap

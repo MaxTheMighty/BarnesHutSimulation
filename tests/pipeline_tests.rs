@@ -33,4 +33,43 @@ async fn run_pipeline() {
     // pipeline.setup_encoder().unwrap();
 
     // pipeline.execute_single_pass(32).unwrap();
+
+    let mut builder = ComputePipelineBuilder::new().await.unwrap();
+    let shader_module = builder
+        .pipeline
+        .device
+        .create_shader_module(wgpu::include_wgsl!("../shaders/n-body.wgsl"));
+
+    let mut input_data: Vec<Body> = Vec::new();
+    for _ in 0..1024 {
+        input_data.push(Body::random(0.0, 100.0));
+    }
+    let input_data_bytes: Vec<u8> = bytemuck::cast_slice(input_data.as_slice()).to_vec();
+    let input_data_usage: BufferUsages = wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE;
+
+    let output_data_bytes: Vec<u8> = vec![0; input_data_bytes.len()];
+    let output_data_usage: BufferUsages =
+        wgpu::BufferUsages::COPY_SRC | wgpu::BufferUsages::STORAGE;
+
+    let mut input_builder = builder.build_shader(shader_module).unwrap();
+
+    input_builder
+        .append_input_data(input_data_bytes, input_data_usage)
+        .unwrap();
+    let mut output_builder = input_builder.done().unwrap();
+
+    output_builder
+        .append_output_data(output_data_bytes, output_data_usage)
+        .unwrap();
+
+    let pipeline_builder = output_builder.done().unwrap();
+
+    let bindgroup_builder = pipeline_builder.build_pipeline(&[]).unwrap();
+
+    let encoder_builder = bindgroup_builder.build_bindgroup().unwrap();
+
+    let mut pipeline = encoder_builder.setup_encoder().unwrap().finalize().unwrap();
+
+    pipeline.execute_single_pass(32).unwrap();
+    return ();
 }
