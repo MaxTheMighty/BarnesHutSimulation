@@ -147,7 +147,7 @@ async fn main() {
         "Total threads: {:?}",
         num_dispatches * WORKGROUP_SIZE as u32
     );
-    if (num_dispatches as usize * WORKGROUP_SIZE > input_data.len()) {
+    if num_dispatches as usize * WORKGROUP_SIZE > input_data.len() {
         eprintln!("!!! Warning: there are more threads than datapoints !!!");
     }
     // let formatted_str = format!("Expected: {:>width$}", expected, width = 12);
@@ -175,23 +175,21 @@ async fn main() {
 
     // Create tx and rx so we can read from the future
     let (data_sender, data_receiver) = channel();
-    let (debug_sender, debug_receiver) = channel();
+    // let (debug_sender, debug_receiver) = channel();
     // Define the callback that handles the slice by sending the data to the receiver
     // Note that this wont execute until we do poll
     temp_slice.map_async(wgpu::MapMode::Read, move |v| data_sender.send(v).unwrap());
-    temp_debug_slice.map_async(wgpu::MapMode::Read, move |v| debug_sender.send(v).unwrap());
+    // temp_debug_slice.map_async(wgpu::MapMode::Read, move |v| debug_sender.send(v).unwrap());
     let _poll_result = device.poll(wgpu::PollType::Wait);
 
     if let Ok(Ok(())) = data_receiver.recv() {
         let data = temp_slice.get_mapped_range();
-        debug_receiver.recv();
+        // debug_receiver.recv();
         let debug_data = temp_debug_slice.get_mapped_range();
         let result: Vec<Body> = bytemuck::cast_slice(&*data).to_vec();
-        let debug_vec: Vec<u32> = bytemuck::cast_slice(&*debug_data).to_vec();
+        // let debug_vec: Vec<u32> = bytemuck::cast_slice(&*debug_data).to_vec();
         drop(data);
         drop(debug_data);
-        // println!("Debug data!");
-        // dbg!(&debug_vec);
         println!("Result bodies length {:?}", result.len());
         println!("Comparing bodies...");
         let mut index: usize = 0;

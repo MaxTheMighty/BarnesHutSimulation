@@ -50,4 +50,12 @@ impl Simulation {
             gravity::apply_force(body);
         }
     }
+
+    pub fn update_only_force(&mut self) {
+        for i in 0..self.bodies.len() {
+            for j in i + 1..self.bodies.len() {
+                gravity::calculate_force(&mut self.bodies[i..j + 1]);
+            }
+        }
+    }
 }
