@@ -44,22 +44,31 @@ fn main(
 
     for (var current_body_index = start; current_body_index < end; current_body_index++) {
         // Calculate the force on ALL the bodies
+
+        // Get the current body from the input
         var current_body: Body = bodies[current_body_index];
         var force: vec2<f32> = vec2<f32>(0.0,0.0);
+
+        // Go through ALL the bodies 
         for(var other_body_index = u32(0); other_body_index < (array_len); other_body_index++){
             if(current_body_index == other_body_index) {
                 continue;
             }
+
+            // Get the other body
             let other_body: Body = bodies[other_body_index];
 
 
-            // Do some force operations
+            // Calculate the force between the current and other body
             let distance = current_body.pos - other_body.pos;
             let distance_magnitude = sqrt((distance.x * distance.x) + (distance.y * distance.y) + EPSILON);
             let current_force = distance * ((G * current_body.mass * other_body.mass)/(pow(distance_magnitude,3)));
+            // Tally the force up
             force += current_force;
         }
-        current_body.force = force;
+        // Add the force to the current body
+        current_body.force += force;
+        // Assign to output
         bodies_out[current_body_index] = current_body;
     }
 }
