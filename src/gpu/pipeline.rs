@@ -99,7 +99,7 @@ impl ComputePipelineBuilder<InputData> {
         &mut self,
         input_data: T,
         usage: BufferUsages,
-    ) -> Result<()> {
+    ) -> Result<usize> {
         //        self.pipeline.setup_input_data(input_data, usage)
         let descriptor = BufferInitDescriptor {
             label: Some("Input buffer"),
@@ -114,7 +114,7 @@ impl ComputePipelineBuilder<InputData> {
             }
         }
 
-        return Ok(());
+        return Ok(self.pipeline.input_buffers.iter().len() - 1);
     }
 
     pub fn done(self) -> Result<ComputePipelineBuilder<OutputData>> {
@@ -199,13 +199,15 @@ impl ComputePipelineBuilder<Bindgroup> {
             index += 1;
         }
 
-        for output in self.pipeline.output_buffers.as_ref().unwrap() {
-            let entry = BindGroupEntry {
-                binding: index,
-                resource: output.as_entire_binding(),
-            };
-            bind_group_entries.push(entry);
-            index += 1;
+        if self.pipeline.output_buffers.is_some() {
+            for output in self.pipeline.output_buffers.as_ref().unwrap() {
+                let entry = BindGroupEntry {
+                    binding: index,
+                    resource: output.as_entire_binding(),
+                };
+                bind_group_entries.push(entry);
+                index += 1;
+            }
         }
 
         let bind_group_descriptor = BindGroupDescriptor {
@@ -467,6 +469,27 @@ impl ComputePipeline {
             )?);
             pass.set_bind_group(0, &self.bind_group, &[]); //&[] is the offsets, we dont have any
             pass.dispatch_workgroups(dispatch_count, 1, 1); // Dimensions of the amount of work groups
+        }
+        Ok(())
+    }
+
+    pub fn execute_n_passes(&mut self, dispatch_count: u32, pass_count: u32) -> Result<()> {
+        {
+            let command_encoder =
+                self.encoder
+                    .as_mut()
+                    .ok_or(ComputePipelineError::NotInitialized(
+                        ComputePipelineStage::Encoder,
+                    ))?;
+            for i in 1..pass_count + 1 {
+                println!("Dispatch number {i}");
+                let mut pass = command_encoder.begin_compute_pass(&Default::default());
+                pass.set_pipeline(self.pipeline.as_ref().ok_or(
+                    ComputePipelineError::NotInitialized(ComputePipelineStage::Pipeline),
+                )?);
+                pass.set_bind_group(0, &self.bind_group, &[]); //&[] is the offsets, we dont have any
+                pass.dispatch_workgroups(dispatch_count, 1, 1); // Dimensions of the amount of work groups
+            }
         }
         Ok(())
     }

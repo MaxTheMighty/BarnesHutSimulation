@@ -4,7 +4,7 @@ use glam::f32::Vec2;
 const G: body::Float = 1.00;
 const DT: body::Float = 0.001;
 
-const EPSILON: body::Float = 1.0;
+const EPSILON: body::Float = 0.001;
 //const MIN: f64 = 0.0f64;
 pub fn calculate_force(bodies: &mut [Body]) {
     let d = bodies[0].pos - bodies[1].pos; //r21
@@ -22,6 +22,16 @@ pub fn calculate_force_single(body_a: &mut Body, body_b: &mut Body) {
     let force: Vec2 = d * ((G * body_a.mass * body_b.mass) / (d_mag.powi(3)));
     body_a.force -= force;
     body_b.force += force;
+}
+
+pub fn calculate_force_one_way(body_a: &mut Body, body_b: &mut Body) {
+    let d = body_a.pos - body_b.pos; //r21
+    let d_mag = ((d.x * d.x) + (d.y * d.y) + EPSILON).sqrt();
+    let force: Vec2 = d * ((G * body_a.mass * body_b.mass) / (d_mag.powi(3)));
+    body_a.force -= force;
+    if (d.x > body_a._padding) {
+        body_a._padding = d.x;
+    }
 }
 
 //Although this is similar to the code above, I wanted to have a different function

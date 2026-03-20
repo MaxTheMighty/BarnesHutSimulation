@@ -1,5 +1,5 @@
 use crate::body::{self, Body};
-use crate::gravity;
+use crate::gravity::{self, calculate_force_one_way, calculate_force_single};
 use glam::f32::Vec2;
 
 #[derive(Debug)]
@@ -53,9 +53,16 @@ impl Simulation {
 
     pub fn update_only_force(&mut self) {
         for i in 0..self.bodies.len() {
-            for j in i + 1..self.bodies.len() {
-                gravity::calculate_force(&mut self.bodies[i..j + 1]);
+            let mut body_a = self.bodies[i];
+            for j in 0..self.bodies.len() {
+                if i == j {
+                    continue;
+                }
+                let mut body_b = self.bodies[j];
+                calculate_force_one_way(&mut body_a, &mut body_b);
+                self.bodies[j] = body_b;
             }
+            self.bodies[i] = body_a;
         }
     }
 }
