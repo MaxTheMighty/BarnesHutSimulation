@@ -53,11 +53,12 @@ async fn main() {
         ],
     });
 
-    let pipeline_layout = Some(&device.create_pipeline_layout(&PipelineLayoutDescriptor {
+    let pipeline_layout_unwrapped =  &device.create_pipeline_layout(&PipelineLayoutDescriptor {
         label: Some("compute pipeline layout"),
         bind_group_layouts: &[&bind_group_layout],
         push_constant_ranges: &[],
-    }));
+    });
+    let pipeline_layout = Some(pipeline_layout_unwrapped);
 
     let pipeline = device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
         label: Some("compute pipeline"),

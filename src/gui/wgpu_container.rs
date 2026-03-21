@@ -1,3 +1,4 @@
+use std::io::Error;
 use std::sync::Arc;
 use log::info;
 use wgpu::{BindGroupDescriptor, Device, IndexFormat, Queue, ShaderStages, Surface, SurfaceCapabilities, SurfaceConfiguration};
@@ -83,8 +84,10 @@ impl WGPUContainer {
             view_formats: vec![],
         };
 
-        let diffuse_bytes = include_bytes!("/Users/maxwell/RustroverProjects/BarnesHutSimulation/textures/happy-tree.png");
-        let diffuse_bytes_2 = include_bytes!("/Users/maxwell/RustroverProjects/BarnesHutSimulation/textures/brick-texture.jpeg");
+        // TODO replace with non hardcoded values
+
+        let diffuse_bytes = include_bytes!("C:\\Users\\maxwe\\Projects\\BarnesHutSimulation\\textures\\happy-tree.png");
+        let diffuse_bytes_2 = include_bytes!("C:\\Users\\maxwe\\Projects\\BarnesHutSimulation\\textures\\brick-texture.jpeg");
         let diffuse_texture = texture::Texture::from_bytes(&device, &queue, diffuse_bytes, "happy-tree texture").unwrap();
         let diffuse_texture_2 = texture::Texture::from_bytes(&device, &queue, diffuse_bytes_2, "brick-wall texture").unwrap(); 
         let textures = vec![diffuse_texture,diffuse_texture_2];
@@ -142,7 +145,7 @@ impl WGPUContainer {
 
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor{
             label: Some("Shader"),
-            source: wgpu::ShaderSource::Wgsl(include_str!("/Users/maxwell/RustroverProjects/BarnesHutSimulation/shaders/shader.wgsl").into())
+            source: wgpu::ShaderSource::Wgsl(include_str!("C:\\Users\\maxwe\\Projects\\BarnesHutSimulation\\shaders\\shader.wgsl").into())
         });
 
 

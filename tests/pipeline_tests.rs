@@ -3,7 +3,6 @@ use std::sync::mpsc::channel;
 use barnes_hut::{
     body::Body,
     gpu::pipeline::*,
-    simulation::{self, Simulation},
 };
 use std::time;
 use wgpu::BufferUsages;
@@ -17,7 +16,7 @@ async fn run_pipeline() {
         .create_shader_module(wgpu::include_wgsl!("../shaders/n-body.wgsl"));
 
     let mut input_data: Vec<Body> = Vec::new();
-    let body_count = 1_000_000;
+    let body_count = 2_000_000;
     for _ in 0..body_count as usize {
         input_data.push(Body::random(0.0, 100.0));
     }

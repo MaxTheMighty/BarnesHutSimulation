@@ -1,5 +1,6 @@
 use std::fmt::Display;
 
+use bytemuck::{Pod, Zeroable};
 use thiserror::Error;
 use wgpu::{
     util::{BufferInitDescriptor, DeviceExt},
@@ -18,6 +19,8 @@ pub enum ComputePipelineError {
     NotInitialized(ComputePipelineStage),
     #[error("Not ready to run operation {0}")]
     NotReady(String),
+    #[error("Invalid index {0}")]
+    InvalidIndex(usize)
 }
 
 #[derive(Debug)]
@@ -492,5 +495,40 @@ impl ComputePipeline {
             }
         }
         Ok(())
+    }
+
+    // We can move the function for reading data to the compute pipeline itself, that way we dont have ownership issues
+    pub fn read_data<T: Pod + Zeroable>(&mut self, buffer_index: usize, read_input: bool, byte_count: u64) -> Result<Vec<T>> {
+        
+        // Get the buffer array that we want to read from
+        let buffer_binding = match read_input {
+            true => self.input_buffers.as_ref().ok_or(ComputePipelineError::NotInitialized(ComputePipelineStage::InputBuffer))?,
+            false => self.output_buffers.as_ref().ok_or(ComputePipelineError::NotInitialized(ComputePipelineStage::OutputBuffer))?,
+        };
+
+        // Get the buffer based on the index passed
+        let buffer_ref = buffer_binding.get(buffer_index).ok_or(ComputePipelineError::InvalidIndex(buffer_index))?;
+        
+        // Create a temporary buffer
+        let temp_buffer = self.device.create_buffer(&wgpu::BufferDescriptor {
+                label: Some("temp buffer for output"),
+                size: byte_count,
+                usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::MAP_READ,
+                mapped_at_creation: false,
+            });
+
+        // The encoder needs to be owned for the finish operation, so maybe we dont create it until we are here?
+        let mut encoder = self.encoder.unwrap();
+        encoder.copy_buffer_to_buffer(
+            buffer_ref,
+            0,
+            &temp_buffer,
+            0,
+            buffer_ref.size(),
+        );
+
+        let finish = encoder.finish();
+        self.queue.submit([finish]);
+        todo!();
     }
 }
