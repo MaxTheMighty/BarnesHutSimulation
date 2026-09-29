@@ -20,7 +20,7 @@ pub enum ComputePipelineError {
     #[error("Not ready to run operation {0}")]
     NotReady(String),
     #[error("Invalid index {0}")]
-    InvalidIndex(usize)
+    InvalidIndex(usize),
 }
 
 #[derive(Debug)]
@@ -147,7 +147,7 @@ impl ComputePipelineBuilder<OutputData> {
             }
         }
 
-        return Ok(self.pipeline.output_buffers.as_ref().unwrap().len() - 1);
+        return Ok(self.pipeline.output_buffers.iter().len() - 1);
     }
 
     pub fn done(self) -> Result<ComputePipelineBuilder<Pipeline>> {
@@ -279,7 +279,21 @@ impl ComputePipeline {
     pub async fn new() -> Result<ComputePipeline> {
         let instance = wgpu::Instance::new(&Default::default());
         let adapter = instance.request_adapter(&Default::default()).await?;
-        let (device, queue) = adapter.request_device(&Default::default()).await?;
+
+        // Specifically create a descriptor with higher limits
+        let descriptor = &wgpu::DeviceDescriptor {
+            label: Some("Custom descriptor"),
+            required_features: wgpu::Features::TIMESTAMP_QUERY,
+            required_limits: wgpu::Limits {
+                max_buffer_size: adapter.limits().max_buffer_size,
+                max_storage_buffer_binding_size: adapter.limits().max_storage_buffer_binding_size,
+                ..wgpu::Limits::default()
+            },
+            memory_hints: Default::default(),
+            trace: wgpu::Trace::default(),
+        };
+
+        let (device, queue) = adapter.request_device(descriptor).await?;
 
         Ok(ComputePipeline {
             instance: instance,
@@ -296,165 +310,6 @@ impl ComputePipeline {
             encoder: None,
         })
     }
-
-    // pub fn setup_shader_module(&mut self, shader: ShaderModule) -> Result<()> {
-    //     self.shader = Some(shader);
-    //     Ok(())
-    // }
-
-    // // We might not need to do this?
-    // pub fn setup_bind_groups(&mut self) -> Result<()> {
-    //     // if self.input_buffers.is_none() && self.output_buffers.is_none() {
-    //     //     return Err(ComputePipelineError::NotInitialized(
-    //     //         "Input or output buffers".to_string(),
-    //     //     ));
-    //     // }
-
-    //     // if self.pipeline.is_none() {
-    //     //     return Err(ComputePipelineError::NotInitialized("Pipeline".to_string()));
-    //     // }
-
-    //     // Bind group layouts:
-    //     // all the inputs are bound 0 to J
-    //     // all the outputs are bound J+1 to N
-
-    //     let mut bind_group_entries: Vec<BindGroupEntry> = Vec::new();
-    //     let mut index: u32 = 0;
-    //     // Safety: We already checked at the start of the function if input is some
-    //     for input in self.input_buffers.as_ref().unwrap() {
-    //         let entry = BindGroupEntry {
-    //             binding: index,
-    //             resource: input.as_entire_binding(),
-    //         };
-    //         bind_group_entries.push(entry);
-    //         index += 1;
-    //     }
-
-    //     for output in self.output_buffers.as_ref().unwrap() {
-    //         let entry = BindGroupEntry {
-    //             binding: index,
-    //             resource: output.as_entire_binding(),
-    //         };
-    //         bind_group_entries.push(entry);
-    //         index += 1;
-    //     }
-
-    //     let bind_group_descriptor = BindGroupDescriptor {
-    //         label: Some("Compute pipeline bind group"),
-    //         layout: &(self.pipeline.as_ref().unwrap().get_bind_group_layout(0)),
-    //         entries: &bind_group_entries,
-    //     };
-
-    //     let bind_group = self.device.create_bind_group(&bind_group_descriptor);
-    //     self.bind_group = Some(bind_group);
-    //     return Ok(());
-    // }
-
-    // // Currently unneeded as we automatically infer the layouts, may have to change in the future
-    // fn setup_pipeline_layout(&mut self, push_constant_ranges: &[PushConstantRange]) -> Result<()> {
-    //     let bind_group_layouts =
-    //         [&self
-    //             .bind_group_layout
-    //             .clone()
-    //             .ok_or(ComputePipelineError::NotInitialized(
-    //                 ComputePipelineStage::BindgroupLayout,
-    //             ))?];
-
-    //     let pipeline_layout_descriptor = &PipelineLayoutDescriptor {
-    //         bind_group_layouts: &bind_group_layouts,
-    //         label: None,
-    //         push_constant_ranges: push_constant_ranges,
-    //     };
-
-    //     let pipeline_layout = self
-    //         .device
-    //         .create_pipeline_layout(&pipeline_layout_descriptor);
-
-    //     self.pipeline_layout = Some(pipeline_layout);
-    //     Ok(())
-    // }
-
-    // pub fn setup_pipeline(&mut self) -> Result<()> {
-    //     let compute_pipeline_descriptor = wgpu::ComputePipelineDescriptor {
-    //         label: Some("Compute pipeline"),
-    //         layout: self.pipeline_layout.as_ref(),
-    //         module: self
-    //             .shader
-    //             .as_ref()
-    //             .ok_or(ComputePipelineError::NotInitialized(
-    //                 ComputePipelineStage::Shader,
-    //             ))?,
-    //         entry_point: None,
-    //         compilation_options: Default::default(),
-    //         cache: Default::default(),
-    //     };
-
-    //     let pipline = self
-    //         .device
-    //         .create_compute_pipeline(&compute_pipeline_descriptor);
-    //     self.pipeline = Some(pipline);
-
-    //     Ok(())
-    // }
-
-    // pub fn setup_input_data<T: AsRef<[u8]>>(&mut self, data: T, usage: BufferUsages) -> Result<()> {
-    //     let descriptor = BufferInitDescriptor {
-    //         label: Some("Input buffer"),
-    //         contents: data.as_ref(),
-    //         usage: usage,
-    //     };
-    //     let input_buffer = self.device.create_buffer_init(&descriptor);
-
-    //     match self.input_buffers {
-    //         Some(ref mut buffers) => buffers.push(input_buffer),
-    //         None => {
-    //             self.input_buffers = Some(vec![input_buffer]);
-    //         }
-    //     }
-
-    //     Ok(())
-    // }
-
-    // pub fn setup_output_data<T: AsRef<[u8]>>(
-    //     &mut self,
-    //     data: T,
-    //     usage: BufferUsages,
-    // ) -> Result<()> {
-    //     let descriptor = BufferInitDescriptor {
-    //         label: Some("Output buffer"),
-    //         contents: data.as_ref(),
-    //         usage: usage,
-    //     };
-    //     let output_buffer = self.device.create_buffer_init(&descriptor);
-
-    //     match self.output_buffers {
-    //         Some(ref mut buffers) => buffers.push(output_buffer),
-    //         None => {
-    //             self.output_buffers = Some(vec![output_buffer]);
-    //         }
-    //     }
-
-    //     Ok(())
-    // }
-
-    // pub fn setup_encoder(&mut self) -> Result<()> {
-    //     let command_encoder_descriptor = &CommandEncoderDescriptor {
-    //         label: Some("Compute pipeline command encoder "),
-    //     };
-    //     let encoder = self
-    //         .device
-    //         .create_command_encoder(command_encoder_descriptor);
-    //     self.encoder = Some(encoder);
-    //     Ok(())
-    // }
-
-    // fn ready_to_compute(&self) -> bool {
-    //     self.pipeline.is_some()
-    //         && self.input_buffers.is_some()
-    //         && self.output_buffers.is_some()
-    //         && self.encoder.is_some()
-    //         && self.bind_group.is_some()
-    // }
 
     pub fn execute_single_pass(&mut self, dispatch_count: u32) -> Result<()> {
         // debug only
@@ -476,7 +331,7 @@ impl ComputePipeline {
         Ok(())
     }
 
-    pub fn execute_n_passes(&mut self, dispatch_count: u32, pass_count: u32) -> Result<()> {
+    pub fn queue_n_passes(&mut self, pass_count: u32, workgroup_size_x: u32) -> Result<()> {
         {
             let command_encoder =
                 self.encoder
@@ -484,48 +339,192 @@ impl ComputePipeline {
                     .ok_or(ComputePipelineError::NotInitialized(
                         ComputePipelineStage::Encoder,
                     ))?;
+
+            let mut pass = command_encoder.begin_compute_pass(&Default::default());
+            pass.set_pipeline(self.pipeline.as_ref().ok_or(
+                ComputePipelineError::NotInitialized(ComputePipelineStage::Pipeline),
+            )?);
+            pass.set_bind_group(0, &self.bind_group, &[]); //&[] is the offsets, we dont have any
             for i in 1..pass_count + 1 {
-                println!("Dispatch number {i}");
-                let mut pass = command_encoder.begin_compute_pass(&Default::default());
-                pass.set_pipeline(self.pipeline.as_ref().ok_or(
-                    ComputePipelineError::NotInitialized(ComputePipelineStage::Pipeline),
-                )?);
-                pass.set_bind_group(0, &self.bind_group, &[]); //&[] is the offsets, we dont have any
-                pass.dispatch_workgroups(dispatch_count, 1, 1); // Dimensions of the amount of work groups
+                // println!("Dispatch number {i}");
+
+                pass.dispatch_workgroups(workgroup_size_x, 1, 1); // Dimensions of the amount of work groups
             }
         }
         Ok(())
     }
 
+    pub fn queue_n_passes_alternate_groups(
+        &mut self,
+        pass_count: u32,
+        workgroup_size_x: u32,
+    ) -> Result<()> {
+        let mut command_encoder =
+            self.encoder
+                .as_mut()
+                .ok_or(ComputePipelineError::NotInitialized(
+                    ComputePipelineStage::Encoder,
+                ))?;
+
+        let query_set = self.device.create_query_set(&wgpu::QuerySetDescriptor {
+            label: Some("compute_timestamp_query_set"),
+            count: 2,
+            ty: wgpu::QueryType::Timestamp,
+        });
+
+        // Buffer to store resolved query data (2 * 8 bytes = 16 bytes)
+        let query_resolve_buffer = self.device.create_buffer(&wgpu::BufferDescriptor {
+            label: Some("query_resolve_buffer"),
+            size: 16,
+            usage: wgpu::BufferUsages::QUERY_RESOLVE | wgpu::BufferUsages::COPY_SRC,
+            mapped_at_creation: false,
+        });
+
+        // Staging buffer to read results back on CPU
+        let cpu_staging_buffer = self.device.create_buffer(&wgpu::BufferDescriptor {
+            label: Some("cpu_staging_buffer"),
+            size: 16,
+            usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::MAP_READ,
+            mapped_at_creation: false,
+        });
+
+        // Here is where the magic happens
+        // We create two different bindGroups
+        // A: input is 0 and output is 1
+        // B: input is 1 and output is 0
+        // This lets us constantly swap between input and output groups without having to complete the whole pipeline first
+
+        // We have to manually define the bind groups and their layouts as they differ from the default pipeline
+
+        let bindgroup_layout: BindGroupLayout = self
+            .pipeline
+            .as_ref()
+            .expect("No pipeline")
+            .get_bind_group_layout(0);
+        let bind_group_a = self.device.create_bind_group(&BindGroupDescriptor {
+            label: Some("Bind Group A"),
+            layout: &bindgroup_layout,
+            entries: &[
+                BindGroupEntry {
+                    binding: 0,
+                    resource: self
+                        .input_buffers
+                        .as_ref()
+                        .expect("No input buffers")
+                        .get(0)
+                        .expect("No input buffers")
+                        .as_entire_binding(),
+                },
+                BindGroupEntry {
+                    binding: 1,
+                    resource: self
+                        .output_buffers
+                        .as_ref()
+                        .expect("No output buffers")
+                        .get(0)
+                        .expect("No output buffers")
+                        .as_entire_binding(),
+                },
+            ],
+        });
+
+        let bind_group_b = self.device.create_bind_group(&BindGroupDescriptor {
+            label: Some("Bind Group B"),
+            layout: &bindgroup_layout,
+            entries: &[
+                BindGroupEntry {
+                    binding: 1,
+                    resource: self
+                        .input_buffers
+                        .as_ref()
+                        .expect("No input buffers")
+                        .get(0)
+                        .expect("No input buffers")
+                        .as_entire_binding(),
+                },
+                BindGroupEntry {
+                    binding: 0,
+                    resource: self
+                        .output_buffers
+                        .as_ref()
+                        .expect("No output buffers")
+                        .get(0)
+                        .expect("No output buffers")
+                        .as_entire_binding(),
+                },
+            ],
+        });
+
+        {
+            let mut pass = command_encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
+                label: Some("timed_compute_pass"),
+                timestamp_writes: Some(wgpu::ComputePassTimestampWrites {
+                    query_set: &query_set,
+                    beginning_of_pass_write_index: Some(0), // Slot 0 for start
+                    end_of_pass_write_index: Some(1),       // Slot 1 for end
+                }),
+            });
+            pass.set_pipeline(self.pipeline.as_ref().ok_or(
+                ComputePipelineError::NotInitialized(ComputePipelineStage::Pipeline),
+            )?);
+
+            for i in 0..pass_count {
+                println!("Dispatch number {i}");
+                if i % 2 == 0 {
+                    pass.set_bind_group(0, &bind_group_a, &[]); //&[] is the offsets, we dont have any
+                } else {
+                    pass.set_bind_group(0, &bind_group_b, &[]); //&[] is the offsets, we dont have any
+                }
+                pass.dispatch_workgroups(workgroup_size_x, 1, 1); // Dimensions of the amount of work groups
+            }
+        }
+        // Resolve the query set into the GPU buffer
+        command_encoder.resolve_query_set(&query_set, 0..2, &query_resolve_buffer, 0);
+
+        // Copy to CPU-mappable staging buffer
+        command_encoder.copy_buffer_to_buffer(&query_resolve_buffer, 0, &cpu_staging_buffer, 0, 16);
+        Ok(())
+    }
+
     // We can move the function for reading data to the compute pipeline itself, that way we dont have ownership issues
-    pub fn read_data<T: Pod + Zeroable>(&mut self, buffer_index: usize, read_input: bool, byte_count: u64) -> Result<Vec<T>> {
-        
+    pub fn read_data<T: Pod + Zeroable>(
+        &mut self,
+        buffer_index: usize,
+        read_input: bool,
+        byte_count: u64,
+    ) -> Result<Vec<T>> {
         // Get the buffer array that we want to read from
         let buffer_binding = match read_input {
-            true => self.input_buffers.as_ref().ok_or(ComputePipelineError::NotInitialized(ComputePipelineStage::InputBuffer))?,
-            false => self.output_buffers.as_ref().ok_or(ComputePipelineError::NotInitialized(ComputePipelineStage::OutputBuffer))?,
+            true => self
+                .input_buffers
+                .as_ref()
+                .ok_or(ComputePipelineError::NotInitialized(
+                    ComputePipelineStage::InputBuffer,
+                ))?,
+            false => self
+                .output_buffers
+                .as_ref()
+                .ok_or(ComputePipelineError::NotInitialized(
+                    ComputePipelineStage::OutputBuffer,
+                ))?,
         };
 
         // Get the buffer based on the index passed
-        let buffer_ref = buffer_binding.get(buffer_index).ok_or(ComputePipelineError::InvalidIndex(buffer_index))?;
-        
+        let buffer_ref = buffer_binding
+            .get(buffer_index)
+            .ok_or(ComputePipelineError::InvalidIndex(buffer_index))?;
+
         // Create a temporary buffer
         let temp_buffer = self.device.create_buffer(&wgpu::BufferDescriptor {
-                label: Some("temp buffer for output"),
-                size: byte_count,
-                usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::MAP_READ,
-                mapped_at_creation: false,
-            });
+            label: Some("temp buffer for output"),
+            size: byte_count,
+            usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::MAP_READ,
+            mapped_at_creation: false,
+        });
 
         // The encoder needs to be owned for the finish operation, so maybe we dont create it until we are here?
-        let mut encoder = self.encoder.unwrap();
-        encoder.copy_buffer_to_buffer(
-            buffer_ref,
-            0,
-            &temp_buffer,
-            0,
-            buffer_ref.size(),
-        );
+        let mut encoder = self.encoder.take().unwrap();
+        encoder.copy_buffer_to_buffer(buffer_ref, 0, &temp_buffer, 0, buffer_ref.size());
 
         let finish = encoder.finish();
         self.queue.submit([finish]);

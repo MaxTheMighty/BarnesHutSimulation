@@ -1,4 +1,4 @@
-use std::sync::mpsc::channel;
+use std::{sync::mpsc::channel, time::Instant};
 
 use barnes_hut::body::Body;
 use wgpu::{
@@ -9,7 +9,7 @@ use wgpu::{
 };
 
 const WORKGROUP_SIZE: usize = 64;
-#[pollster::main]
+#[tokio::main]
 async fn main() {
     let instance = wgpu::Instance::new(&Default::default());
     let adapter = instance.request_adapter(&Default::default()).await.unwrap();
@@ -40,20 +40,20 @@ async fn main() {
                 },
                 count: None,
             },
-            BindGroupLayoutEntry {
-                binding: 2,
-                visibility: ShaderStages::COMPUTE,
-                ty: wgpu::BindingType::Buffer {
-                    ty: wgpu::BufferBindingType::Storage { read_only: false },
-                    has_dynamic_offset: false,
-                    min_binding_size: None,
-                },
-                count: None,
-            },
+            // BindGroupLayoutEntry {
+            //     binding: 2,
+            //     visibility: ShaderStages::COMPUTE,
+            //     ty: wgpu::BindingType::Buffer {
+            //         ty: wgpu::BufferBindingType::Storage { read_only: false },
+            //         has_dynamic_offset: false,
+            //         min_binding_size: None,
+            //     },
+            //     count: None,
+            // },
         ],
     });
 
-    let pipeline_layout_unwrapped =  &device.create_pipeline_layout(&PipelineLayoutDescriptor {
+    let pipeline_layout_unwrapped = &device.create_pipeline_layout(&PipelineLayoutDescriptor {
         label: Some("compute pipeline layout"),
         bind_group_layouts: &[&bind_group_layout],
         push_constant_ranges: &[],
@@ -71,7 +71,7 @@ async fn main() {
 
     // If its not a multiple of 64, our rending gets messed up and we have slighly more thread executions than datapoints
     let mut input_data: Vec<Body> = Vec::new();
-    for _i in 0..256 {
+    for _i in 0..1_000_000 {
         input_data.push(Body::random(0.0, 20.0));
     }
 
@@ -81,15 +81,18 @@ async fn main() {
     let input_buffer = device.create_buffer_init(&BufferInitDescriptor {
         label: Some("input buffer"),
         contents: bytemuck::cast_slice(&input_data_bytes), // Cast data into [u8]
-        usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
+        usage: wgpu::BufferUsages::COPY_DST
+            | wgpu::BufferUsages::STORAGE
+            | wgpu::BufferUsages::COPY_SRC,
     });
 
-    // Create the output buffer
-    let output_buffer = device.create_buffer(&wgpu::BufferDescriptor {
+    // Create the buffers that contain the data
+    let output_buffer = device.create_buffer_init(&BufferInitDescriptor {
         label: Some("output buffer"),
-        size: input_data_bytes.len() as u64, // Since we're just copying the data
-        usage: wgpu::BufferUsages::COPY_SRC | wgpu::BufferUsages::STORAGE, //Depends on the modes set within the shader (var<storage,read_write>)
-        mapped_at_creation: false,
+        contents: bytemuck::cast_slice(&input_data_bytes), // Cast data into [u8]
+        usage: wgpu::BufferUsages::COPY_DST
+            | wgpu::BufferUsages::STORAGE
+            | wgpu::BufferUsages::COPY_SRC,
     });
 
     // Debug buffer
@@ -105,7 +108,7 @@ async fn main() {
     // Which our output buffer has
     let temp_buffer = device.create_buffer(&wgpu::BufferDescriptor {
         label: Some("temp buffer"),
-        size: output_buffer.size(),
+        size: input_buffer.size(),
         usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::MAP_READ, // Must be here
         mapped_at_creation: false,
     });
@@ -131,10 +134,10 @@ async fn main() {
                 binding: 1,
                 resource: output_buffer.as_entire_binding(),
             },
-            wgpu::BindGroupEntry {
-                binding: 2,
-                resource: debug_buffer.as_entire_binding(),
-            },
+            // wgpu::BindGroupEntry {
+            //     binding: 2,
+            //     resource: debug_buffer.as_entire_binding(),
+            // },
         ],
     });
 
@@ -158,17 +161,29 @@ async fn main() {
     // Since its in a closure, once its over that reference goes away and we can use encoder again
 
     // This is where we repeatedly execute
+    // Create a timestamp for easier benchmarking
+    // Create query set for 2 timestamps (beginning and end)
     {
-        let mut pass = encoder.begin_compute_pass(&Default::default());
+        let mut pass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
+            label: Some("timed compute pass"),
+            timestamp_writes: Some(wgpu::ComputePassTimestampWrites {
+                query_set: &query_set,
+                beginning_of_pass_write_index: Some(0),
+                end_of_pass_write_index: Some(1),
+            }),
+        });
         pass.set_pipeline(&pipeline);
         pass.set_bind_group(0, &bind_group, &[]); //&[] is the offsets, we dont have any
         pass.dispatch_workgroups(num_dispatches, 1, 1); // Dimensions of the amount of work groups
     }
 
     // Copy the data off the GPU and submit the command to finish the pass
-    encoder.copy_buffer_to_buffer(&output_buffer, 0, &temp_buffer, 0, output_buffer.size());
-    encoder.copy_buffer_to_buffer(&debug_buffer, 0, &temp_debug_buffer, 0, debug_buffer.size());
+    encoder.copy_buffer_to_buffer(&input_buffer, 0, &temp_buffer, 0, temp_buffer.size());
+    // println("Coppying between ")
+    // encoder.copy_buffer_to_buffer(&debug_buffer, 0, &temp_debug_buffer, 0, debug_buffer.size());
     queue.submit([encoder.finish()]);
+    println!("Elapsed shader run time: {} ms", duration.as_millis());
+    println!("Finished compute pass");
 
     // Create a slice into the temp buffer
     let temp_slice = temp_buffer.slice(..);
@@ -186,21 +201,23 @@ async fn main() {
     if let Ok(Ok(())) = data_receiver.recv() {
         let data = temp_slice.get_mapped_range();
         // debug_receiver.recv();
-        let debug_data = temp_debug_slice.get_mapped_range();
+        // let debug_data = temp_debug_slice.get_mapped_range();
         let result: Vec<Body> = bytemuck::cast_slice(&*data).to_vec();
         // let debug_vec: Vec<u32> = bytemuck::cast_slice(&*debug_data).to_vec();
         drop(data);
-        drop(debug_data);
+        // drop(debug_data);
         println!("Result bodies length {:?}", result.len());
         println!("Comparing bodies...");
         let mut index: usize = 0;
         for (result_body, expected_body) in result.iter().zip(input_data) {
-            if *result_body != expected_body && (*result_body).mass != expected_body.mass + 1.0 {
-                println!("Bodies don't match!");
-                println!("Index {index}");
-                println!("Result:   {:?}", result_body);
-                println!("Expected: {:?}", expected_body);
-            }
+            // if *result_body != expected_body && (*result_body).mass != expected_body.mass + 1.0 {
+            //     println!("Bodies don't match!");
+            //     println!("Index {index}");
+            //     println!("Result:   {:?}", result_body);
+            //     println!("Expected: {:?}", expected_body);
+            // }
+            // println!("Result body       {:?}",result_body);
+            // println!("Non-iterated body {:?}",expected_body);
             index += 1;
         }
     } else {

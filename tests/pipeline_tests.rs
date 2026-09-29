@@ -45,7 +45,7 @@ async fn run_pipeline() {
     // if we want one thread per body for n bodies
     // we want to do bodies/64
     let wg_count = body_count / 64;
-    pipeline.execute_n_passes(wg_count, 1).unwrap();
+    pipeline.queue_n_passes(wg_count, 1).unwrap();
 
     let input_buffer_binding = pipeline.input_buffers.unwrap();
     let input_buffer_ref = input_buffer_binding.get(input_buffer_index).unwrap();
